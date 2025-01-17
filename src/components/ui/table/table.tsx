@@ -1,4 +1,11 @@
-import { $, component$, useStore } from "@builder.io/qwik";
+import {
+  $,
+  component$,
+  type QRL,
+  useSignal,
+  useStore,
+  useTask$,
+} from "@builder.io/qwik";
 import { TbAlignJustified, TbBrackets } from "@qwikest/icons/tablericons";
 
 type Row = Record<string, any>;
@@ -33,12 +40,13 @@ export const Table = component$<Props>(({ columns, rows }) => {
   }>({
     selectedColumns: {},
     selectedRows: [],
-    columnWidths: {
-      expected_response: 200,
-      query: 200,
-      context: 300,
-      classify_query: 200,
-    },
+    columnWidths: columns.reduce(
+      (acc, column) => {
+        acc[column.name] = 400;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
   });
 
   const toggleSelectAll = $(() => {
@@ -72,7 +80,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
       <table class="min-w-full bg-white text-sm">
         <thead>
           <tr>
-            <th class="w-0 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
+            <th class="border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
               <input
                 type="checkbox"
                 checked={rows.length === state.selectedRows.length}
@@ -83,7 +91,9 @@ export const Table = component$<Props>(({ columns, rows }) => {
               <th
                 key={index}
                 class="border bg-gray-50  text-left font-light hover:bg-purple-50"
-                style={{ width: `${state.columnWidths[column.name]}px` }}
+                style={{
+                  width: `${state.columnWidths[column.name]}px`,
+                }}
               >
                 <div class="flex flex-row items-center justify-between">
                   <div class="flex w-full items-center gap-1 px-2">
@@ -114,28 +124,83 @@ export const Table = component$<Props>(({ columns, rows }) => {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} class="hover:bg-gray-100">
-              <td class="border px-2 py-2 text-center">
-                <input
-                  type="checkbox"
-                  checked={state.selectedRows.includes(row.id)}
-                  onChange$={() => toggleSelectRow(row)}
-                />
-              </td>
-              {columns.map((column, index) => (
-                <td
-                  key={index}
-                  class={`cursor-pointer text-wrap border px-2 ${state.selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-500" : ""}`}
-                  onClick$={() => selectColumn(row, index)}
-                >
-                  {row[column.name]}
-                </td>
-              ))}
-            </tr>
+          {rows.map((row, index) => (
+            <Row
+              key={row.id}
+              index={index}
+              row={row}
+              columns={columns}
+              selectedColumns={state.selectedColumns}
+              selectedRows={state.selectedRows}
+              toggleSelectRow={toggleSelectRow}
+              selectColumn={selectColumn}
+            />
           ))}
         </tbody>
       </table>
     </div>
   );
 });
+
+export const Row = component$<{
+  row: Row;
+  columns: Column[];
+  index: number;
+  selectedRows: number[];
+  selectedColumns: Record<string, number[] | undefined>;
+  toggleSelectRow: QRL<(row: Row) => void>;
+  selectColumn: QRL<(row: Row, columnIndex: number) => void>;
+}>(
+  ({
+    index,
+    row,
+    columns,
+    selectedColumns,
+    selectedRows,
+    toggleSelectRow,
+    selectColumn,
+  }) => {
+    const isSelectedRow = useSignal(false);
+    const hovering = useSignal(isSelectedRow.value);
+
+    useTask$(({ track }) => {
+      const isSelected = track(() => selectedRows.includes(row.id));
+
+      isSelectedRow.value = isSelected;
+      hovering.value = isSelectedRow.value;
+    });
+
+    return (
+      <tr
+        class="hover:bg-gray-100"
+        onMouseOver$={() => {
+          hovering.value = true;
+        }}
+        onMouseOut$={() => {
+          hovering.value = isSelectedRow.value || false;
+        }}
+      >
+        <td class="border px-2 py-2 text-center">
+          {hovering.value ? (
+            <input
+              type="checkbox"
+              checked={isSelectedRow.value}
+              onChange$={() => toggleSelectRow(row)}
+            />
+          ) : (
+            <span>{index + 1}</span>
+          )}
+        </td>
+        {columns.map((column, index) => (
+          <td
+            key={index}
+            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-500" : ""}`}
+            onClick$={() => selectColumn(row, index)}
+          >
+            {row[column.name]}
+          </td>
+        ))}
+      </tr>
+    );
+  },
+);
