@@ -2,8 +2,8 @@ import { $, component$, useStore } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
 import { Commands } from "~/components/ui/commands/commands";
-import { Sidebar } from "~/components/ui/sidebar/sidebar";
 import { Table } from "~/components/ui/table/table";
+import { AddColumn } from "~/features/add-column";
 
 type Row = Record<string, any>;
 
@@ -93,8 +93,7 @@ export default component$(() => {
 
       <Table columns={store.columns} rows={store.rows} />
 
-      <Sidebar
-        editColumn={sidebar.column}
+      <AddColumn
         open={sidebar.open}
         onClose={onClose}
         onCreateColumn={onCreateColumn}
