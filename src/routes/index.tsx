@@ -82,7 +82,7 @@ export default component$(() => {
   });
 
   return (
-    <div class="container mx-auto p-4">
+    <div class="mx-auto px-4 pt-2">
       <Commands onAddColumn={onAddColumn} />
 
       <Table columns={store.columns} rows={store.rows} />

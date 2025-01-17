@@ -51,7 +51,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
     selectedRows: [],
     columnWidths: columns.reduce(
       (acc, column) => {
-        acc[column.name] = 400;
+        acc[column.name] = 750;
         return acc;
       },
       {} as Record<string, number>,
@@ -89,7 +89,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
       <table class="min-w-full bg-white text-sm">
         <thead>
           <tr>
-            <th class="border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
+            <th class="max-w-8 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
               <input
                 type="checkbox"
                 checked={rows.length === state.selectedRows.length}
@@ -189,7 +189,7 @@ export const Row = component$<{
           hovering.value = isSelectedRow.value || false;
         }}
       >
-        <td class="border px-2 py-2 text-center">
+        <td class="max-w-6 border px-2 py-2 text-center">
           {hovering.value ? (
             <input
               type="checkbox"
