@@ -26,7 +26,7 @@ export const Commands = component$<Props>(({ onAddColumn }) => {
         </Button>
         <Button size="sm" look="ghost" class="flex gap-1 font-light">
           <TbFilter />
-          Filters
+          Filter
         </Button>
       </div>
       <div class="flex space-x-2">

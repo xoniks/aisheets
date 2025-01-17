@@ -6,13 +6,19 @@ import {
   useStore,
   useTask$,
 } from "@builder.io/qwik";
-import { TbAlignJustified, TbBrackets } from "@qwikest/icons/tablericons";
+import {
+  TbAlignJustified,
+  TbBraces,
+  TbBrackets,
+  TbHash,
+  TbToggleLeft,
+} from "@qwikest/icons/tablericons";
 
 type Row = Record<string, any>;
 
 type Column = {
   name: string;
-  type: "string" | "array";
+  type: "text" | "array" | "number" | "boolean" | "object";
   generated: boolean;
   sortable: boolean;
 };
@@ -23,7 +29,10 @@ interface Props {
 }
 
 const Icons: Record<Column["type"], any> = {
-  string: TbAlignJustified,
+  text: TbAlignJustified,
+  number: TbHash,
+  boolean: TbToggleLeft,
+  object: TbBraces,
   array: TbBrackets,
 };
 const ColumnIcon = component$<{ type: Column["type"] }>((props) => {

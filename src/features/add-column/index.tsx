@@ -1,4 +1,4 @@
-import { $, component$, type QRL, useSignal } from "@builder.io/qwik";
+import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
 
 import { Sidebar } from "~/components/ui/sidebar/sidebar";
 
@@ -11,70 +11,69 @@ import { Select } from "~/components/ui/select/select";
 
 type Column = {
   name: string;
-  type: "string" | "array";
+  type: "text" | "array" | "number" | "boolean" | "object";
   generated: boolean;
   sortable: boolean;
 };
 
 interface SidebarProps {
   open: boolean;
+  type: Column["type"];
   onClose: QRL<() => void>;
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
 export const AddColumn = component$<SidebarProps>(
-  ({ open, onClose, onCreateColumn }) => {
-    const types = ["string", "array"];
-    const column = useSignal<Partial<Column>>({
-      generated: false,
-      sortable: true,
+  ({ open, onClose, onCreateColumn, type }) => {
+    const types = ["text", "array", "number", "boolean", "object"];
+    const newType = useSignal<Column["type"]>(type);
+    const name = useSignal<Column["name"]>("");
+
+    useTask$(({ track }) => {
+      track(() => type);
+
+      newType.value = type;
+      name.value = "";
     });
 
     const onSave = $(() => {
-      if (!column.value.name || !column.value.type) return;
+      if (!name.value) return;
 
-      onCreateColumn(column.value as Column);
+      const column = {
+        name: name.value,
+        type: newType.value,
+        generated: false,
+        sortable: false,
+      };
+
+      onClose();
+      onCreateColumn(column);
     });
 
     return (
       <Sidebar open={open}>
         <div class="flex h-full flex-col justify-between p-4">
           <div class="h-full">
-            <div class="flex items-center justify-end">
-              <Button
-                size="sm"
-                class="flex w-32 items-center  space-x-4 font-light"
-                look="outline"
-                onClick$={onClose}
-              >
-                <div class="flex items-center gap-1">
-                  <TbX />
-                  Close
-                </div>
-                <p class="font-light text-gray-400">esc</p>
-              </Button>
-            </div>
-
             <div class="flex flex-col gap-4">
-              <Label for="column-name">Column name</Label>
+              <div class="flex items-center justify-between">
+                <Label for="column-name">Column name</Label>
+
+                <Button size="sm" look="ghost" onClick$={onClose}>
+                  <TbX />
+                </Button>
+              </div>
               <Input
                 id="column-name"
                 class="h-10"
                 placeholder="Enter column name"
-                value={column.value.name}
-                onInput$={(_, e) => (column.value.name = e.value)}
+                bind:value={name}
               />
 
-              <Select.Root
-                class="w-48"
-                onChange$={$((e: any) => {
-                  column.value.type = e as Column["type"];
-                })}
-              >
-                <Select.Trigger class="rounded-sm bg-blue-200">
-                  <Select.DisplayValue placeholder="Select an option" />
+              <Select.Root class="h-10 w-48" bind:value={newType}>
+                <Select.Trigger class="h-10 rounded-sm bg-blue-200">
+                  <Select.DisplayValue />
                 </Select.Trigger>
-                <Select.Popover gutter={8}>
+                <Select.Popover>
                   {types.map((type) => (
                     <Select.Item key={type}>
                       <Select.ItemLabel>{type}</Select.ItemLabel>

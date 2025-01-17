@@ -1,15 +1,15 @@
-import { $, component$, useStore } from "@builder.io/qwik";
+import { $, component$, useSignal, useStore } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
 import { Commands } from "~/components/ui/commands/commands";
 import { Table } from "~/components/ui/table/table";
-import { AddColumn } from "~/features/add-column";
+import { AddColumnModal } from "~/features/add-column/add-column-modal";
 
 type Row = Record<string, any>;
 
 type Column = {
   name: string;
-  type: "string" | "array";
+  type: "text" | "array" | "number" | "boolean" | "object";
   generated: boolean;
   sortable: boolean;
 };
@@ -22,13 +22,13 @@ export default component$(() => {
     columns: [
       {
         name: "expected_response",
-        type: "string",
+        type: "text",
         sortable: false,
         generated: false,
       },
       {
         name: "query",
-        type: "string",
+        type: "text",
         sortable: true,
         generated: false,
       },
@@ -40,7 +40,7 @@ export default component$(() => {
       },
       {
         name: "classify_query",
-        type: "string",
+        type: "text",
         sortable: false,
         generated: true,
       },
@@ -65,20 +65,14 @@ export default component$(() => {
     ],
   });
 
-  const sidebar = useStore<{
-    open: boolean;
-    column: Column | null;
-  }>({
-    open: false,
-    column: null,
-  });
+  const showAddColumn = useSignal(false);
 
   const onAddColumn = $(() => {
-    sidebar.open = true;
+    showAddColumn.value = true;
   });
 
   const onClose = $(() => {
-    sidebar.open = false;
+    showAddColumn.value = false;
   });
 
   const onCreateColumn = $((newColum: Column) => {
@@ -93,8 +87,8 @@ export default component$(() => {
 
       <Table columns={store.columns} rows={store.rows} />
 
-      <AddColumn
-        open={sidebar.open}
+      <AddColumnModal
+        open={showAddColumn}
         onClose={onClose}
         onCreateColumn={onCreateColumn}
       />
