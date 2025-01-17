@@ -72,7 +72,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
       <table class="min-w-full bg-white text-sm">
         <thead>
           <tr>
-            <th class="w-0 border bg-gray-50 px-2 py-2 text-left hover:bg-sky-100">
+            <th class="w-0 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
               <input
                 type="checkbox"
                 checked={rows.length === state.selectedRows.length}
@@ -116,7 +116,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} class="hover:bg-gray-100">
-              <td class="border px-2 py-2">
+              <td class="border px-2 py-2 text-center">
                 <input
                   type="checkbox"
                   checked={state.selectedRows.includes(row.id)}
