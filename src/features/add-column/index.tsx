@@ -1,99 +1,189 @@
-import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
+import {
+  component$,
+  type Signal,
+  type QRL,
+  useSignal,
+  $,
+} from "@builder.io/qwik";
+import {
+  TbAlignJustified,
+  TbBraces,
+  TbBrackets,
+  TbDownload,
+  TbHash,
+  TbToggleLeft,
+  TbX,
+} from "@qwikest/icons/tablericons";
+import { Button, Modal } from "~/components/ui";
+import { ColumnSidebar } from "~/features/add-column/column-sidebar";
 
-import { Sidebar } from "~/components/ui/sidebar/sidebar";
-
-import { LuCheck } from "@qwikest/icons/lucide";
-import { TbX } from "@qwikest/icons/tablericons";
-import { Button } from "~/components/ui/button/button";
-import { Input } from "~/components/ui/input/input";
-import { Label } from "~/components/ui/label/label";
-import { Select } from "~/components/ui/select/select";
-
-type Column = {
+export interface Column {
   name: string;
   type: "text" | "array" | "number" | "boolean" | "object";
   generated: boolean;
   sortable: boolean;
-};
+}
 
-interface SidebarProps {
-  open: boolean;
-  type: Column["type"];
+interface Props {
+  open: Signal<boolean>;
   onClose: QRL<() => void>;
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
-export const AddColumn = component$<SidebarProps>(
-  ({ open, onClose, onCreateColumn, type }) => {
-    const types = ["text", "array", "number", "boolean", "object"];
-    const newType = useSignal<Column["type"]>(type);
-    const name = useSignal<Column["name"]>("");
+export const AddColumn = component$<Props>(
+  ({ open, onClose, onCreateColumn }) => {
+    const showSidebar = useSignal(false);
+    const columnType = useSignal<Column["type"]>("text");
 
-    useTask$(({ track }) => {
-      track(() => type);
+    const openSidebar = $((type: Column["type"]) => {
+      onClose();
 
-      newType.value = type;
-      name.value = "";
+      columnType.value = type;
+      showSidebar.value = true;
     });
 
-    const onSave = $(() => {
-      if (!name.value) return;
-
-      const column = {
-        name: name.value,
-        type: newType.value,
-        generated: false,
-        sortable: false,
-      };
-
-      onClose();
-      onCreateColumn(column);
+    const closeSidebar = $(() => {
+      showSidebar.value = false;
     });
 
     return (
-      <Sidebar open={open}>
-        <div class="flex h-full flex-col justify-between p-4">
-          <div class="h-full">
-            <div class="flex flex-col gap-4">
-              <div class="flex items-center justify-between">
-                <Label for="column-name">Column name</Label>
-
-                <Button size="sm" look="ghost" onClick$={onClose}>
-                  <TbX />
-                </Button>
-              </div>
-              <Input
-                id="column-name"
-                class="h-10"
-                placeholder="Enter column name"
-                bind:value={name}
-              />
-
-              <Select.Root class="h-10 w-48" bind:value={newType}>
-                <Select.Trigger class="h-10 rounded-sm bg-blue-200">
-                  <Select.DisplayValue />
-                </Select.Trigger>
-                <Select.Popover>
-                  {types.map((type) => (
-                    <Select.Item key={type}>
-                      <Select.ItemLabel>{type}</Select.ItemLabel>
-                      <Select.ItemIndicator>
-                        <LuCheck class="h-4 w-4" />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Popover>
-              </Select.Root>
-            </div>
-          </div>
-
-          <div class="flex h-16 w-full items-center justify-center">
-            <Button size="sm" class="w-full rounded-sm p-2" onClick$={onSave}>
-              Create new column
+      <Modal.Root bind:show={open} class="h-max w-full">
+        <Modal.Panel>
+          <div class="mb-5 flex justify-between">
+            <Modal.Title>New column</Modal.Title>
+            <Button size="sm" look="ghost" onClick$={onClose}>
+              <TbX />
             </Button>
           </div>
-        </div>
-      </Sidebar>
+          <div class="flex justify-between gap-2">
+            <div class="flex w-1/2 flex-col gap-2">
+              <h4 class="text-sm text-gray-600">Import</h4>
+
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-lime-100"
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400">
+                  <TbDownload />
+                </span>
+                Import Column from
+              </Button>
+
+              <h4 class="text-sm text-gray-600">Static columns</h4>
+
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-blue-200"
+                onClick$={() => openSidebar("text")}
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                  <TbAlignJustified />
+                </span>
+                Text
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-rose-100"
+                onClick$={() => openSidebar("number")}
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                  <TbHash />
+                </span>
+                Number
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-lime-100"
+                onClick$={() => openSidebar("boolean")}
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                  <TbToggleLeft />
+                </span>
+                Boolean
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-yellow-100"
+                onClick$={() => openSidebar("object")}
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                  <TbBraces />
+                </span>
+                Object
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-indigo-300"
+                onClick$={() => openSidebar("array")}
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                  <TbBrackets />
+                </span>
+                Array
+              </Button>
+            </div>
+
+            <div class="flex w-1/2 flex-col gap-2">
+              <h4 class="text-xs text-gray-600">Dynamic columns</h4>
+
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:border-green-200"
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
+                  <TbToggleLeft />
+                </span>
+                From HF 🤗
+              </Button>
+
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-blue-300"
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
+                  <TbToggleLeft />
+                </span>
+                Run Prompt
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-cyan-200"
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
+                  <TbToggleLeft />
+                </span>
+                Api Call
+              </Button>
+              <Button
+                size="md"
+                look="ghost"
+                class="flex justify-start text-left text-sm hover:bg-yellow-100"
+              >
+                <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
+                  <TbToggleLeft />
+                </span>
+                Extract from JSON
+              </Button>
+            </div>
+          </div>
+        </Modal.Panel>
+
+        <ColumnSidebar
+          open={showSidebar.value}
+          type={columnType.value}
+          onClose={closeSidebar}
+          onCreateColumn={onCreateColumn}
+        />
+      </Modal.Root>
     );
   },
 );

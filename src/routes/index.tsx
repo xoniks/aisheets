@@ -3,16 +3,9 @@ import { type DocumentHead } from "@builder.io/qwik-city";
 
 import { Commands } from "~/components/ui/commands/commands";
 import { Table } from "~/components/ui/table/table";
-import { AddColumnModal } from "~/features/add-column/add-column-modal";
+import { AddColumn, type Column } from "~/features/add-column";
 
 type Row = Record<string, any>;
-
-type Column = {
-  name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
-  generated: boolean;
-  sortable: boolean;
-};
 
 export default component$(() => {
   const store = useStore<{
@@ -87,7 +80,7 @@ export default component$(() => {
 
       <Table columns={store.columns} rows={store.rows} />
 
-      <AddColumnModal
+      <AddColumn
         open={showAddColumn}
         onClose={onClose}
         onCreateColumn={onCreateColumn}

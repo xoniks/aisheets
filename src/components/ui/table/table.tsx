@@ -19,8 +19,6 @@ type Row = Record<string, any>;
 type Column = {
   name: string;
   type: "text" | "array" | "number" | "boolean" | "object";
-  generated: boolean;
-  sortable: boolean;
 };
 
 interface Props {
