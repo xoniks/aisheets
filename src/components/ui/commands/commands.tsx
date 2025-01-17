@@ -9,7 +9,7 @@ import {
   TbPlayerPlay,
   TbRocket,
 } from "@qwikest/icons/tablericons";
-import { Button } from "~/components/ui";
+import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 
 interface Props {
   onAddColumn: QRL<() => void>;
@@ -19,19 +19,90 @@ export const Commands = component$<Props>(({ onAddColumn }) => {
   return (
     <div class="flex h-12 w-full items-center justify-between border-t">
       <div class="flex space-x-2">
-        <Button size="sm" look="ghost" class="flex gap-1 font-light">
-          <TbColumns3 />
-          Columns
-        </Button>
-        <Button size="sm" look="ghost" class="flex gap-1 font-light">
-          <TbFold />
-          Row height
-        </Button>
-        <Button size="sm" look="ghost" class="flex gap-1 font-light">
-          <TbFilter />
-          Filter
-        </Button>
+        <Popover.Root flip={false} gutter={8} floating="bottom-start">
+          <Popover.Trigger
+            class={buttonVariants({
+              look: "ghost",
+              size: "sm",
+            })}
+          >
+            <div class="flex items-center gap-1 font-light">
+              <TbColumns3 />
+              Columns
+            </div>
+          </Popover.Trigger>
+
+          <Popover.Panel class="rounded-none">
+            <div class="flex items-center justify-between border-b">
+              <h6 class="text-sm font-light">Columns</h6>
+
+              <Button size="sm" look="link" class="flex gap-1 font-light">
+                hide all
+              </Button>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <span>---</span>
+              <span>---</span>
+              <span>---</span>
+              <span>---</span>
+              <span>---</span>
+              <span>---</span>
+            </div>
+          </Popover.Panel>
+        </Popover.Root>
+
+        <Select.Root>
+          <Select.Trigger
+            hideIcon
+            class={buttonVariants({
+              look: "ghost",
+              size: "sm",
+            })}
+          >
+            <div class="flex items-center gap-1 font-light">
+              <TbFold />
+              Row height
+            </div>
+          </Select.Trigger>
+          <Select.Popover class="w-4 rounded-none">
+            <Select.Item>
+              <Select.ItemLabel>Small</Select.ItemLabel>
+            </Select.Item>
+            <Select.Item>
+              <Select.ItemLabel>Medium</Select.ItemLabel>
+            </Select.Item>
+            <Select.Item>
+              <Select.ItemLabel>Normal</Select.ItemLabel>
+            </Select.Item>
+            <Select.Item>
+              <Select.ItemLabel>Tall</Select.ItemLabel>
+            </Select.Item>
+            <Select.Item>
+              <Select.ItemLabel>Complete</Select.ItemLabel>
+            </Select.Item>
+          </Select.Popover>
+        </Select.Root>
+
+        <Popover.Root flip={false} gutter={8} floating="bottom-start">
+          <Popover.Trigger
+            class={buttonVariants({
+              look: "ghost",
+              size: "sm",
+            })}
+          >
+            <div class="flex items-center gap-1 font-light">
+              <TbFilter />
+              Filter
+            </div>
+          </Popover.Trigger>
+
+          <Popover.Panel>
+            <h6 class="text-sm">Filters</h6>
+          </Popover.Panel>
+        </Popover.Root>
       </div>
+
       <div class="flex space-x-2">
         <Button
           size="sm"
