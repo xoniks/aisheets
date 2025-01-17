@@ -203,7 +203,7 @@ export const Row = component$<{
         {columns.map((column, index) => (
           <td
             key={index}
-            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-500" : ""}`}
+            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}`}
             onClick$={() => selectColumn(row, index)}
           >
             {row[column.name]}
