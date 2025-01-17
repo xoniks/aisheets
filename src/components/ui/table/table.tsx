@@ -2,6 +2,7 @@ import {
   $,
   component$,
   type QRL,
+  useComputed$,
   useSignal,
   useStore,
   useTask$,
@@ -56,8 +57,12 @@ export const Table = component$<Props>(({ columns, rows }) => {
     ),
   });
 
+  const isAllRowsSelected = useComputed$(
+    () => rows.length === state.selectedRows.length,
+  );
+
   const toggleSelectAll = $(() => {
-    if (rows.length === state.selectedRows.length) {
+    if (isAllRowsSelected.value) {
       state.selectedRows = [];
     } else {
       state.selectedRows = rows.map((row) => row.id);
@@ -90,7 +95,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
             <th class="max-w-8 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
               <input
                 type="checkbox"
-                checked={rows.length === state.selectedRows.length}
+                checked={isAllRowsSelected.value}
                 onChange$={toggleSelectAll}
               />
             </th>
