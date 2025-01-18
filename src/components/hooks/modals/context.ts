@@ -1,7 +1,7 @@
 import { createContextId, type Signal } from "@builder.io/qwik";
 
 export type ID = "addColumnModal" | "addColumnSidebar";
-type Status = "open" | "closed";
+export type Status = "open" | "closed";
 
 export type Modals = Record<ID, Status>;
 

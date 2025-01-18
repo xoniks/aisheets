@@ -1,10 +1,12 @@
 import { component$, type Signal, Slot } from "@builder.io/qwik";
 
 interface SidebarProps {
-  open: Signal<boolean>;
+  "bind:show": Signal<boolean>;
 }
 
-export const Sidebar = component$<SidebarProps>(({ open }) => {
+export const Sidebar = component$<SidebarProps>((prop) => {
+  const open = prop["bind:show"];
+
   return (
     <div class="relative">
       <div
@@ -14,6 +16,13 @@ export const Sidebar = component$<SidebarProps>(({ open }) => {
       >
         <Slot />
       </div>
+
+      {open.value && (
+        <div
+          class="fixed left-0 top-0 h-full w-1/2"
+          onClick$={() => (open.value = false)}
+        />
+      )}
     </div>
   );
 });
