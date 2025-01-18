@@ -1,31 +1,22 @@
-import { $, component$ } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
-import { Table, useToggle } from "~/components";
+import { Table } from "~/components";
 import { AddColumn, Commands } from "~/features";
-import { useRows, type Column, useColumns } from "~/state";
+import { useHome } from "~/routes/useHome";
 
 export { useRowsLoader, useColumnsLoader } from "~/services";
 
 export default component$(() => {
-  const { value, open, close } = useToggle();
-
-  const columns = useColumns();
-  const rows = useRows();
-
-  const onCreateColumn = $((newColum: Column) => {
-    close();
-
-    columns.value = [...columns.value, newColum];
-  });
+  const { columns, rows, onCreateColumn } = useHome();
 
   return (
     <div class="mx-auto px-4 pt-2">
-      <Commands onAddColumn={open} />
+      <Commands />
 
       <Table columns={columns.value} rows={rows.value} />
 
-      <AddColumn open={value} onClose={close} onCreateColumn={onCreateColumn} />
+      <AddColumn onCreateColumn={onCreateColumn} />
     </div>
   );
 });

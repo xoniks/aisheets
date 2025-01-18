@@ -1,4 +1,4 @@
-import { component$, type QRL } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import {
   TbBolt,
   TbColumnInsertRight,
@@ -10,12 +10,11 @@ import {
   TbRocket,
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
+import { useModals } from "~/components/hooks/modals/modals";
 
-interface Props {
-  onAddColumn: QRL<() => void>;
-}
+export const Commands = component$(() => {
+  const { open: openAddColumnModal } = useModals("addColumnModal");
 
-export const Commands = component$<Props>(({ onAddColumn }) => {
   return (
     <div class="flex h-12 w-full items-center justify-between border-t">
       <div class="flex space-x-2">
@@ -108,7 +107,7 @@ export const Commands = component$<Props>(({ onAddColumn }) => {
           size="sm"
           look="outline"
           class="flex gap-1 font-light"
-          onClick$={onAddColumn}
+          onClick$={openAddColumnModal}
         >
           <TbColumnInsertRight />
           Add column

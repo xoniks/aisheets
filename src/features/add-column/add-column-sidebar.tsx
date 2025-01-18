@@ -5,16 +5,18 @@ import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select } from "~/components";
 
 import { type Column } from "~/state";
+import { useModals } from "~/components/hooks/modals/modals";
 
 interface SidebarProps {
-  open: boolean;
   type: Column["type"];
-  onClose: QRL<() => void>;
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
 export const AddColumnSidebar = component$<SidebarProps>(
-  ({ open, onClose, onCreateColumn, type }) => {
+  ({ onCreateColumn, type }) => {
+    const { isOpen, close: closeAddColumnSidebar } =
+      useModals("addColumnSidebar");
+
     const types = ["text", "array", "number", "boolean", "object"];
     const newType = useSignal<Column["type"]>(type);
     const name = useSignal<Column["name"]>("");
@@ -36,19 +38,19 @@ export const AddColumnSidebar = component$<SidebarProps>(
         sortable: false,
       };
 
-      onClose();
+      closeAddColumnSidebar();
       onCreateColumn(column);
     });
 
     return (
-      <Sidebar open={open}>
+      <Sidebar open={isOpen}>
         <div class="flex h-full flex-col justify-between p-4">
           <div class="h-full">
             <div class="flex flex-col gap-4">
               <div class="flex items-center justify-between">
                 <Label for="column-name">Column name</Label>
 
-                <Button size="sm" look="ghost" onClick$={onClose}>
+                <Button size="sm" look="ghost" onClick$={closeAddColumnSidebar}>
                   <TbX />
                 </Button>
               </div>
