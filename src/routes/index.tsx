@@ -1,8 +1,8 @@
 import { $, component$ } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
-import { Commands, Table, useToggle } from "~/components";
-import { AddColumn } from "~/features";
+import { Table, useToggle } from "~/components";
+import { AddColumn, Commands } from "~/features";
 import { useRows, type Column, useColumns } from "~/state";
 
 export { useRowsLoader, useColumnsLoader } from "~/services";
