@@ -17,7 +17,7 @@ import {
 
 import { Button, Modal } from "~/components";
 
-import { ColumnSidebar } from "~/features/add-column/column-sidebar";
+import { AddColumnSidebar } from "~/features/add-column/add-column-sidebar";
 
 import { type Column } from "~/state";
 
@@ -174,7 +174,7 @@ export const AddColumn = component$<Props>(
           </div>
         </Modal.Panel>
 
-        <ColumnSidebar
+        <AddColumnSidebar
           open={showSidebar.value}
           type={columnType.value}
           onClose={closeSidebar}

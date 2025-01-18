@@ -13,7 +13,7 @@ interface SidebarProps {
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
-export const ColumnSidebar = component$<SidebarProps>(
+export const AddColumnSidebar = component$<SidebarProps>(
   ({ open, onClose, onCreateColumn, type }) => {
     const types = ["text", "array", "number", "boolean", "object"];
     const newType = useSignal<Column["type"]>(type);

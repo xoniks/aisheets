@@ -2,10 +2,10 @@ import { $, component$ } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
 import { Commands, Table, useToggle } from "~/components";
-import { AddColumn } from "~/features/add-column";
+import { AddColumn } from "~/features";
 import { useRows, type Column, useColumns } from "~/state";
 
-export { useRowsLoader, useColumnsLoader } from "~/state";
+export { useRowsLoader, useColumnsLoader } from "~/services";
 
 export default component$(() => {
   const { value, open, close } = useToggle();
