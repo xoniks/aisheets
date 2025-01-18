@@ -6,3 +6,6 @@ export * from "./label/label";
 export * from "./select/select";
 export * from "./modal/modal";
 export * from "./popover/popover";
+export * from "./commands/commands";
+export * from "./table/table";
+export * from "./sidebar/sidebar";

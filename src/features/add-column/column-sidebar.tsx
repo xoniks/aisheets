@@ -1,14 +1,10 @@
 import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
 
-import { Sidebar } from "~/components/ui/sidebar/sidebar";
-
 import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
-import { Button } from "~/components/ui/button/button";
-import { Input } from "~/components/ui/input/input";
-import { Label } from "~/components/ui/label/label";
-import { Select } from "~/components/ui/select/select";
-import { type Column } from "~/features/add-column";
+import { Sidebar, Button, Input, Label, Select } from "~/components";
+
+import { type Column } from "~/state";
 
 interface SidebarProps {
   open: boolean;

@@ -1,100 +1,41 @@
-import { $, component$, useSignal, useStore } from "@builder.io/qwik";
+import { $, component$ } from "@builder.io/qwik";
 import { type DocumentHead } from "@builder.io/qwik-city";
 
-import { Commands } from "~/components/ui/commands/commands";
-import { Table } from "~/components/ui/table/table";
-import { AddColumn, type Column } from "~/features/add-column";
+import { Commands, Table, useToggle } from "~/components";
+import { AddColumn } from "~/features/add-column";
+import { useRows, type Column, useColumns } from "~/state";
 
-type Row = Record<string, any>;
+export { useRowsLoader, useColumnsLoader } from "~/state";
 
 export default component$(() => {
-  const store = useStore<{
-    columns: Column[];
-    rows: Row[];
-  }>({
-    columns: [
-      {
-        name: "expected_response",
-        type: "text",
-        sortable: false,
-        generated: false,
-      },
-      {
-        name: "query",
-        type: "text",
-        sortable: true,
-        generated: false,
-      },
-      {
-        name: "context",
-        type: "array",
-        sortable: false,
-        generated: false,
-      },
-      {
-        name: "classify_query",
-        type: "text",
-        sortable: false,
-        generated: true,
-      },
-    ],
-    rows: [
-      {
-        id: 1,
-        expected_response: "Expected 1",
-        query: "what are points on a mortgage?",
-        context:
-          "Discount points, also called mortgage points or simply points, are a form of pre-paid interest available in the United States when arranging a mortgage. One point equals one percent of the loan amount. By charging a borrower points, a lender eff",
-        classify_query: "finance",
-      },
-      {
-        id: 2,
-        expected_response: "Expected 2",
-        query: "what are points on a mortgage?",
-        context:
-          "April.\n\n\n=== United States ===\n\n\n==== Federal government ====\n\nIn the United States, the federal government's fiscal year is the 12-month period beginning 1 October and ending 30 September the following year. The ident",
-        classify_query: "general",
-      },
-    ],
-  });
+  const { value, open, close } = useToggle();
 
-  const showAddColumn = useSignal(false);
-
-  const onAddColumn = $(() => {
-    showAddColumn.value = true;
-  });
-
-  const onClose = $(() => {
-    showAddColumn.value = false;
-  });
+  const columns = useColumns();
+  const rows = useRows();
 
   const onCreateColumn = $((newColum: Column) => {
-    onClose();
+    close();
 
-    store.columns = [...store.columns, newColum];
+    columns.value = [...columns.value, newColum];
   });
 
   return (
     <div class="mx-auto px-4 pt-2">
-      <Commands onAddColumn={onAddColumn} />
+      <Commands onAddColumn={open} />
 
-      <Table columns={store.columns} rows={store.rows} />
+      <Table columns={columns.value} rows={rows.value} />
 
-      <AddColumn
-        open={showAddColumn}
-        onClose={onClose}
-        onCreateColumn={onCreateColumn}
-      />
+      <AddColumn open={value} onClose={close} onCreateColumn={onCreateColumn} />
     </div>
   );
 });
 
 export const head: DocumentHead = {
-  title: "ArgillaV3",
+  title: "Argilla - V3",
   meta: [
     {
       name: "description",
-      content: "Qwik site description",
+      content: "Argilla - V3",
     },
   ],
 };

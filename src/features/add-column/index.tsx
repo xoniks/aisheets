@@ -14,15 +14,12 @@ import {
   TbToggleLeft,
   TbX,
 } from "@qwikest/icons/tablericons";
-import { Button, Modal } from "~/components/ui";
+
+import { Button, Modal } from "~/components";
+
 import { ColumnSidebar } from "~/features/add-column/column-sidebar";
 
-export interface Column {
-  name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
-  generated: boolean;
-  sortable: boolean;
-}
+import { type Column } from "~/state";
 
 interface Props {
   open: Signal<boolean>;
