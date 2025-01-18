@@ -24,8 +24,6 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   const { isOpen, close: closeAddColumnModal } = useModals("addColumnModal");
   const { open: openAddColumnSidebar } = useModals("addColumnSidebar");
 
-  console.log("isOpen", isOpen);
-
   const columnType = useSignal<Column["type"]>("text");
 
   const openSidebar = $((type: Column["type"]) => {
