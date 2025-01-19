@@ -1,9 +1,32 @@
 import { $, useContext, useSignal, useTask$ } from "@builder.io/qwik";
 import { type Status, type ID } from "~/components/hooks/modals/config";
 import { modalsContext } from "~/components/hooks/modals/context";
-import { wrap, type Modal } from "~/components/hooks/modals/named";
+import { wrap } from "~/components/hooks/modals/named";
 
-export const useModals = <N extends ID>(id: N): Modal<N> => {
+/**
+ * Hook to manage the state of modals.
+ *
+ * @param {N} id - The unique identifier for the modal.
+ * You can find the list of available modals in the `config.ts` file.
+ * @returns ReturnType<{
+ * isOpen: Signal<boolean>;
+ * open: QRL<() => Promise<void>>;
+ * close: QRL<() => Promise<void>>
+ * }>
+ *
+ * @example
+ * const { isOpenMyModal, openMyModal, closeMyModal } = useModals("myModal");
+ *
+ * // Open the modal
+ * openMyModal();
+ *
+ * // Close the modal
+ * closeMyModal();
+ *
+ * // Check if the modal is open
+ * console.log(isOpenMyModal.value); // true or false
+ */
+export const useModals = <N extends ID>(id: N) => {
   const isOpen = useSignal(false);
   const modals = useContext(modalsContext);
 

@@ -1,7 +1,7 @@
 import { type QRL, type Signal } from "@builder.io/qwik";
 import { type ID } from "~/components/hooks/modals/config";
 
-export type Modal<N extends string> = {
+type Modal<N extends string> = {
   [K in `isOpen${Capitalize<N>}`]: Signal<boolean>;
 } & {
   [K in `open${Capitalize<N>}`]: QRL<() => Promise<void>>;
