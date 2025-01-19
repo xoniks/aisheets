@@ -1,11 +1,9 @@
 import { $, useContext, useSignal, useTask$ } from "@builder.io/qwik";
-import {
-  type ID,
-  modalsContext,
-  type Status,
-} from "~/components/hooks/modals/context";
+import { type Status, type ID } from "~/components/hooks/modals/config";
+import { modalsContext } from "~/components/hooks/modals/context";
+import { wrap, type Modal } from "~/components/hooks/modals/named";
 
-export const useModals = (id: ID) => {
+export const useModals = <N extends ID>(id: N): Modal<N> => {
   const isOpen = useSignal(false);
   const modals = useContext(modalsContext);
 
@@ -33,9 +31,11 @@ export const useModals = (id: ID) => {
     }
   });
 
-  return {
+  const modal = {
     isOpen,
     open: $(() => change("open")),
     close: $(() => change("closed")),
   };
+
+  return wrap(id, isOpen, modal.open, modal.close);
 };

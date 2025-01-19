@@ -5,7 +5,8 @@ import {
   useContextProvider,
   useSignal,
 } from "@builder.io/qwik";
-import { type Modals, modalsContext } from "~/components/hooks/modals/context";
+import { type Modals } from "~/components/hooks/modals/config";
+import { modalsContext } from "~/components/hooks/modals/context";
 
 const useModalsProvider = (modals: Signal<Modals>) => {
   useContextProvider(modalsContext, modals);

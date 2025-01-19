@@ -5,7 +5,7 @@ import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select } from "~/components";
 
 import { type Column } from "~/state";
-import { useModals } from "~/components/hooks/modals/modals";
+import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface SidebarProps {
   type: Column["type"];
@@ -14,7 +14,7 @@ interface SidebarProps {
 
 export const AddColumnSidebar = component$<SidebarProps>(
   ({ onCreateColumn, type }) => {
-    const { isOpen, close: closeAddColumnSidebar } =
+    const { isOpenAddColumnSidebar, closeAddColumnSidebar } =
       useModals("addColumnSidebar");
 
     const types = ["text", "array", "number", "boolean", "object"];
@@ -43,7 +43,7 @@ export const AddColumnSidebar = component$<SidebarProps>(
     });
 
     return (
-      <Sidebar bind:show={isOpen}>
+      <Sidebar bind:show={isOpenAddColumnSidebar}>
         <div class="flex h-full flex-col justify-between p-4">
           <div class="h-full">
             <div class="flex flex-col gap-4">

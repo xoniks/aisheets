@@ -14,15 +14,16 @@ import { Button, Modal } from "~/components";
 import { AddColumnSidebar } from "~/features/add-column/add-column-sidebar";
 
 import { type Column } from "~/state";
-import { useModals } from "~/components/hooks/modals/modals";
+import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface Props {
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
 export const AddColumn = component$<Props>(({ onCreateColumn }) => {
-  const { isOpen, close: closeAddColumnModal } = useModals("addColumnModal");
-  const { open: openAddColumnSidebar } = useModals("addColumnSidebar");
+  const { isOpenAddColumnModal, closeAddColumnModal } =
+    useModals("addColumnModal");
+  const { openAddColumnSidebar } = useModals("addColumnSidebar");
 
   const columnType = useSignal<Column["type"]>("text");
 
@@ -35,7 +36,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   });
 
   return (
-    <Modal.Root bind:show={isOpen} class="h-max w-full">
+    <Modal.Root bind:show={isOpenAddColumnModal} class="h-max w-full">
       <Modal.Panel>
         <div class="mb-5 flex justify-between">
           <Modal.Title>New column</Modal.Title>

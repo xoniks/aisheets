@@ -10,10 +10,10 @@ import {
   TbRocket,
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
-import { useModals } from "~/components/hooks/modals/modals";
+import { useModals } from "~/components/hooks/modals/use-modals";
 
 export const Commands = component$(() => {
-  const { open: openAddColumnModal } = useModals("addColumnModal");
+  const { openAddColumnModal } = useModals("addColumnModal");
 
   return (
     <div class="flex h-12 w-full items-center justify-between border-t">
