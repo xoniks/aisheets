@@ -1,13 +1,12 @@
 import { component$ } from "@builder.io/qwik";
 import {
-  TbBolt,
   TbColumnInsertRight,
   TbColumns3,
   TbDownload,
   TbFilter,
   TbFold,
   TbPlayerPlay,
-  TbRocket,
+  TbRefresh,
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 import { useModals } from "~/components/hooks/modals/use-modals";
@@ -127,17 +126,8 @@ export const Commands = component$(() => {
           look="outline"
           class="flex gap-1 border-green-300 bg-green-100 font-light"
         >
-          <TbBolt />
-          Export from HF 🤗
-        </Button>
-
-        <Button
-          size="sm"
-          look="outline"
-          class="flex gap-1 border-blue-300 bg-blue-100 font-light"
-        >
-          <TbRocket />
-          Export to 🤗
+          <TbRefresh />
+          Sync with 🤗
         </Button>
 
         <Button size="sm" look="ghost" class="flex gap-1 font-light">
