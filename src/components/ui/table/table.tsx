@@ -29,6 +29,7 @@ const Icons: Record<Column["type"], any> = {
   boolean: TbToggleLeft,
   object: TbBraces,
   array: TbBrackets,
+  prompt: TbSparkles,
 };
 const ColumnIcon = component$<{ type: Column["type"] }>((props) => {
   const Icon = Icons[props.type];
@@ -104,7 +105,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
             {columns.map((column, index) => (
               <th
                 key={index}
-                class={`border bg-gray-50  text-left font-light hover:bg-purple-50 ${column.generated ? "bg-purple-200" : ""}`}
+                class={`border bg-gray-50  text-left font-light hover:bg-purple-50 ${column.type === "prompt" ? "bg-purple-200" : ""}`}
                 style={{
                   width: `${state.columnWidths[column.name]}px`,
                 }}
@@ -112,7 +113,6 @@ export const Table = component$<Props>(({ columns, rows }) => {
                 <div class="flex flex-row items-center justify-between">
                   <div class="flex w-full items-center gap-1 px-2">
                     <ColumnIcon type={column.type} />
-                    {column.generated && <TbSparkles />}
                     {column.name}
                   </div>
                   <div
@@ -210,7 +210,7 @@ export const RowComponent = component$<{
           <td
             key={index}
             class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}
-            ${column.generated ? "border-2 border-purple-200" : ""}`}
+            ${column.type === "prompt" ? "border-2 border-purple-200" : ""}`}
             onClick$={() => selectColumn(row, index)}
           >
             {row.data[column.name].generating ? (

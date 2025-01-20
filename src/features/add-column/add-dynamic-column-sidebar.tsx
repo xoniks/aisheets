@@ -2,7 +2,7 @@ import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
 
 import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
-import { Sidebar, Button, Input, Label, Select } from "~/components";
+import { Sidebar, Button, Input, Label, Select, Textarea } from "~/components";
 
 import { type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
@@ -12,19 +12,20 @@ interface SidebarProps {
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
-export const AddStaticColumnSidebar = component$<SidebarProps>(
+export const AddDynamicColumnSidebar = component$<SidebarProps>(
   ({ onCreateColumn, type }) => {
-    const { isOpenAddStaticColumnSidebar, closeAddStaticColumnSidebar } =
-      useModals("addStaticColumnSidebar");
+    const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
+      useModals("addDynamicColumnSidebar");
 
-    const types = ["text", "array", "number", "boolean", "object"];
-    const newType = useSignal<Column["type"]>(type);
+    const outputType = ["text", "array", "number", "boolean", "object"];
+    const newOutputType = useSignal<NonNullable<Column["output"]>>("text");
     const name = useSignal<Column["name"]>("");
+    const rowsGenerated = useSignal("100");
 
     useTask$(({ track }) => {
       track(() => type);
 
-      newType.value = type;
+      newOutputType.value = "text";
       name.value = "";
     });
 
@@ -33,17 +34,17 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
 
       const column: Column = {
         name: name.value,
-        type: newType.value,
+        type: "prompt",
+        output: newOutputType.value,
         sortable: false,
-        output: null,
       };
 
-      closeAddStaticColumnSidebar();
+      closeAddDynamicColumnSidebar();
       onCreateColumn(column);
     });
 
     return (
-      <Sidebar bind:show={isOpenAddStaticColumnSidebar}>
+      <Sidebar bind:show={isOpenAddDynamicColumnSidebar}>
         <div class="flex h-full flex-col justify-between p-4">
           <div class="h-full">
             <div class="flex flex-col gap-4">
@@ -53,7 +54,7 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
                 <Button
                   size="sm"
                   look="ghost"
-                  onClick$={closeAddStaticColumnSidebar}
+                  onClick$={closeAddDynamicColumnSidebar}
                 >
                   <TbX />
                 </Button>
@@ -65,12 +66,13 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
                 bind:value={name}
               />
 
-              <Select.Root bind:value={newType}>
+              <Label for="column-output-type">Output type</Label>
+              <Select.Root id="column-output-type" bind:value={newOutputType}>
                 <Select.Trigger>
                   <Select.DisplayValue />
                 </Select.Trigger>
                 <Select.Popover>
-                  {types.map((type) => (
+                  {outputType.map((type) => (
                     <Select.Item key={type}>
                       <Select.ItemLabel>{type}</Select.ItemLabel>
                       <Select.ItemIndicator>
@@ -80,6 +82,17 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
                   ))}
                 </Select.Popover>
               </Select.Root>
+
+              <Label for="column-prompt">Prompt template</Label>
+              <Textarea id="column-prompt" />
+
+              <Label for="column-rows">Rows generated</Label>
+              <Input
+                id="column-rows"
+                type="number"
+                class="h-10"
+                bind:value={rowsGenerated}
+              />
             </div>
           </div>
 

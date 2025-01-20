@@ -55,6 +55,7 @@ export const Commands = component$(() => {
         <Select.Root>
           <Select.Trigger
             hideIcon
+            look="ghost"
             class={buttonVariants({
               look: "ghost",
               size: "sm",

@@ -84,10 +84,11 @@ export const useHome = () => {
         ...row.data,
         [newColum.name]: {
           value: "",
-          generating: true,
         },
       },
     }));
+
+    if (newColum.type !== "prompt") return;
 
     const stream = async (row: Row) => {
       const response = await streamFromServer(row, newColum);

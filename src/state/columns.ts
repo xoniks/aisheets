@@ -9,9 +9,9 @@ import { useColumnsLoader } from "~/services";
 
 export interface Column {
   name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
-  generated: boolean;
+  type: "text" | "array" | "number" | "boolean" | "object" | "prompt";
   sortable: boolean;
+  output: "text" | "array" | "number" | "boolean" | "object" | null;
 }
 
 const columnContext = createContextId<Signal<Column[]>>("column.context");

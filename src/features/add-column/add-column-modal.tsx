@@ -3,8 +3,9 @@ import {
   TbAlignJustified,
   TbBraces,
   TbBrackets,
-  TbDownload,
+  TbCloud,
   TbHash,
+  TbKeyboard,
   TbToggleLeft,
   TbX,
 } from "@qwikest/icons/tablericons";
@@ -15,6 +16,7 @@ import { AddStaticColumnSidebar } from "~/features/add-column/add-static-column-
 
 import { type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
+import { AddDynamicColumnSidebar } from "~/features/add-column/add-dynamic-column-sidebar";
 
 interface Props {
   onCreateColumn: QRL<(column: Column) => void>;
@@ -24,6 +26,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   const { isOpenAddColumnModal, closeAddColumnModal } =
     useModals("addColumnModal");
   const { openAddStaticColumnSidebar } = useModals("addStaticColumnSidebar");
+  const { openAddDynamicColumnSidebar } = useModals("addDynamicColumnSidebar");
 
   const columnType = useSignal<Column["type"]>("text");
 
@@ -31,6 +34,8 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
     closeAddColumnModal();
 
     columnType.value = type;
+
+    if (type === "prompt") return openAddDynamicColumnSidebar();
 
     openAddStaticColumnSidebar();
   });
@@ -46,19 +51,6 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
         </div>
         <div class="flex justify-between gap-2">
           <div class="flex w-1/2 flex-col gap-2">
-            <h4 class="text-sm text-gray-600">Import</h4>
-
-            <Button
-              size="md"
-              look="ghost"
-              class="flex justify-start text-left text-sm hover:bg-lime-100"
-            >
-              <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-yellow-400">
-                <TbDownload />
-              </span>
-              Import Column from
-            </Button>
-
             <h4 class="text-sm text-gray-600">Static columns</h4>
 
             <Button
@@ -127,18 +119,19 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               class="flex justify-start text-left text-sm hover:border-green-200"
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
-                <TbToggleLeft />
+                🤗
               </span>
-              From HF 🤗
+              From HuggingFace
             </Button>
 
             <Button
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-blue-300"
+              onClick$={() => openSidebar("prompt")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
-                <TbToggleLeft />
+                <TbKeyboard />
               </span>
               Run Prompt
             </Button>
@@ -148,7 +141,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               class="flex justify-start text-left text-sm hover:bg-cyan-200"
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
-                <TbToggleLeft />
+                <TbCloud />
               </span>
               Api Call
             </Button>
@@ -158,7 +151,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               class="flex justify-start text-left text-sm hover:bg-yellow-100"
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
-                <TbToggleLeft />
+                <TbBraces />
               </span>
               Extract from JSON
             </Button>
@@ -167,6 +160,11 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
       </Modal.Panel>
 
       <AddStaticColumnSidebar
+        type={columnType.value}
+        onCreateColumn={onCreateColumn}
+      />
+
+      <AddDynamicColumnSidebar
         type={columnType.value}
         onCreateColumn={onCreateColumn}
       />

@@ -5,5 +5,6 @@ export const modalsContext = createContextId<Signal<Modals>>("modals.context");
 
 export const initialState: Modals = {
   addColumnModal: "closed",
-  addColumnSidebar: "closed",
+  addStaticColumnSidebar: "closed",
+  addDynamicColumnSidebar: "closed",
 };
