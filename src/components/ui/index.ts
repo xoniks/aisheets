@@ -8,3 +8,4 @@ export * from "./modal/modal";
 export * from "./popover/popover";
 export * from "./table/table";
 export * from "./sidebar/sidebar";
+export * from "./skeleton/skeleton";

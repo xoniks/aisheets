@@ -10,8 +10,10 @@ import {
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 import { useModals } from "~/components/hooks/modals/use-modals";
+import { useColumns } from "~/state";
 
 export const Commands = component$(() => {
+  const columns = useColumns();
   const { openAddColumnModal } = useModals("addColumnModal");
 
   return (
@@ -39,13 +41,13 @@ export const Commands = component$(() => {
               </Button>
             </div>
 
-            <div class="flex flex-col gap-1">
-              <span>---</span>
-              <span>---</span>
-              <span>---</span>
-              <span>---</span>
-              <span>---</span>
-              <span>---</span>
+            <div class="mt-1 flex flex-col gap-1">
+              {columns.value.map((column) => (
+                <div class="flex items-center gap-1" key={column.name}>
+                  <input type="checkbox" checked={true} />
+                  <span class="font-light">{column.name}</span>
+                </div>
+              ))}
             </div>
           </Popover.Panel>
         </Popover.Root>

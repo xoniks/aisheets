@@ -31,10 +31,10 @@ export const AddColumnSidebar = component$<SidebarProps>(
     const onSave = $(() => {
       if (!name.value) return;
 
-      const column = {
+      const column: Column = {
         name: name.value,
         type: newType.value,
-        generated: false,
+        generated: true, //this depends on kind of column type!
         sortable: false,
       };
 

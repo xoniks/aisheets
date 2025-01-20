@@ -12,15 +12,11 @@ import {
   TbBraces,
   TbBrackets,
   TbHash,
+  TbSparkles,
   TbToggleLeft,
 } from "@qwikest/icons/tablericons";
-
-type Row = Record<string, any>;
-
-type Column = {
-  name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
-};
+import { Skeleton } from "~/components/ui/skeleton/skeleton";
+import { type Column, type Row } from "~/state";
 
 interface Props {
   columns: Column[];
@@ -43,18 +39,24 @@ const ColumnIcon = component$<{ type: Column["type"] }>((props) => {
 export const Table = component$<Props>(({ columns, rows }) => {
   const state = useStore<{
     selectedColumns: Record<string, number[] | undefined>;
-    selectedRows: number[];
+    selectedRows: string[];
     columnWidths: Record<string, number>;
   }>({
     selectedColumns: {},
     selectedRows: [],
-    columnWidths: columns.reduce(
+    columnWidths: {},
+  });
+
+  useTask$(({ track }) => {
+    track(() => columns);
+
+    state.columnWidths = columns.reduce(
       (acc, column) => {
         acc[column.name] = 750;
         return acc;
       },
       {} as Record<string, number>,
-    ),
+    );
   });
 
   const isAllRowsSelected = useComputed$(
@@ -102,7 +104,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
             {columns.map((column, index) => (
               <th
                 key={index}
-                class="border bg-gray-50  text-left font-light hover:bg-purple-50"
+                class={`border bg-gray-50  text-left font-light hover:bg-purple-50 ${column.generated ? "bg-purple-200" : ""}`}
                 style={{
                   width: `${state.columnWidths[column.name]}px`,
                 }}
@@ -110,6 +112,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
                 <div class="flex flex-row items-center justify-between">
                   <div class="flex w-full items-center gap-1 px-2">
                     <ColumnIcon type={column.type} />
+                    {column.generated && <TbSparkles />}
                     {column.name}
                   </div>
                   <div
@@ -137,7 +140,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <Row
+            <RowComponent
               key={row.id}
               index={index}
               row={row}
@@ -154,11 +157,11 @@ export const Table = component$<Props>(({ columns, rows }) => {
   );
 });
 
-export const Row = component$<{
+export const RowComponent = component$<{
   row: Row;
   columns: Column[];
   index: number;
-  selectedRows: number[];
+  selectedRows: string[];
   selectedColumns: Record<string, number[] | undefined>;
   toggleSelectRow: QRL<(row: Row) => void>;
   selectColumn: QRL<(row: Row, columnIndex: number) => void>;
@@ -206,10 +209,21 @@ export const Row = component$<{
         {columns.map((column, index) => (
           <td
             key={index}
-            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}`}
+            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}
+            ${column.generated ? "border-2 border-purple-200" : ""}`}
             onClick$={() => selectColumn(row, index)}
           >
-            {row[column.name]}
+            {row.data[column.name].generating ? (
+              <div class="flex flex-col gap-2">
+                <Skeleton class="h-6 w-full" />
+                <Skeleton class="h-3 w-full" />
+                <Skeleton class="h-3 w-full" />
+                <Skeleton class="h-3 w-full" />
+                <Skeleton class="h-3 w-full" />
+              </div>
+            ) : (
+              row.data[column.name].value
+            )}
           </td>
         ))}
       </tr>

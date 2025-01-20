@@ -6,7 +6,15 @@ import {
 } from "@builder.io/qwik";
 import { useRowsLoader } from "~/services";
 
-export type Row = Record<string, any>;
+export interface Row {
+  id: string;
+  data: {
+    [key: string]: {
+      value: string;
+      generating?: boolean;
+    };
+  };
+}
 
 const rowContext = createContextId<Signal<Row[]>>("rows.context");
 const useRowsStateProvider = (rows: Signal<Row[]>) => {
