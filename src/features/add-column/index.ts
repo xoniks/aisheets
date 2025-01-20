@@ -1,2 +1,2 @@
 export * from "./add-column-modal";
-export * from "./add-column-sidebar";
+export * from "./add-static-column-sidebar";

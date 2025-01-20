@@ -11,7 +11,7 @@ import {
 
 import { Button, Modal } from "~/components";
 
-import { AddColumnSidebar } from "~/features/add-column/add-column-sidebar";
+import { AddStaticColumnSidebar } from "~/features/add-column/add-static-column-sidebar";
 
 import { type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
@@ -23,7 +23,7 @@ interface Props {
 export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   const { isOpenAddColumnModal, closeAddColumnModal } =
     useModals("addColumnModal");
-  const { openAddColumnSidebar } = useModals("addColumnSidebar");
+  const { openAddStaticColumnSidebar } = useModals("addStaticColumnSidebar");
 
   const columnType = useSignal<Column["type"]>("text");
 
@@ -32,7 +32,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
 
     columnType.value = type;
 
-    openAddColumnSidebar();
+    openAddStaticColumnSidebar();
   });
 
   return (
@@ -166,7 +166,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
         </div>
       </Modal.Panel>
 
-      <AddColumnSidebar
+      <AddStaticColumnSidebar
         type={columnType.value}
         onCreateColumn={onCreateColumn}
       />

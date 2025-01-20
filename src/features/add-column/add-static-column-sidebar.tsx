@@ -12,10 +12,10 @@ interface SidebarProps {
   onCreateColumn: QRL<(column: Column) => void>;
 }
 
-export const AddColumnSidebar = component$<SidebarProps>(
+export const AddStaticColumnSidebar = component$<SidebarProps>(
   ({ onCreateColumn, type }) => {
-    const { isOpenAddColumnSidebar, closeAddColumnSidebar } =
-      useModals("addColumnSidebar");
+    const { isOpenAddStaticColumnSidebar, closeAddStaticColumnSidebar } =
+      useModals("addStaticColumnSidebar");
 
     const types = ["text", "array", "number", "boolean", "object"];
     const newType = useSignal<Column["type"]>(type);
@@ -38,19 +38,23 @@ export const AddColumnSidebar = component$<SidebarProps>(
         sortable: false,
       };
 
-      closeAddColumnSidebar();
+      closeAddStaticColumnSidebar();
       onCreateColumn(column);
     });
 
     return (
-      <Sidebar bind:show={isOpenAddColumnSidebar}>
+      <Sidebar bind:show={isOpenAddStaticColumnSidebar}>
         <div class="flex h-full flex-col justify-between p-4">
           <div class="h-full">
             <div class="flex flex-col gap-4">
               <div class="flex items-center justify-between">
                 <Label for="column-name">Column name</Label>
 
-                <Button size="sm" look="ghost" onClick$={closeAddColumnSidebar}>
+                <Button
+                  size="sm"
+                  look="ghost"
+                  onClick$={closeAddStaticColumnSidebar}
+                >
                   <TbX />
                 </Button>
               </div>

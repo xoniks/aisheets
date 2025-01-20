@@ -1,4 +1,7 @@
-export type ID = "addColumnModal" | "addColumnSidebar";
+export type ID =
+  | "addColumnModal"
+  | "addStaticColumnSidebar"
+  | "addDynamicColumnSidebar";
 
 export type Status = "open" | "closed";
 
