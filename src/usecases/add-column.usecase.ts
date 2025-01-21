@@ -1,7 +1,6 @@
 import { $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import { addColumn, getAllRows, updateRow } from "~/services";
-import { RowModel } from "~/services/db/models/row";
 import { useColumnsStore, useRowsStore, type Column, type Row } from "~/state";
 
 //TODO: Put it on background
@@ -15,16 +14,12 @@ const useStreamServer = () => {
     for (const letters of response) {
       row.data[column.name].value += letters;
 
-      await RowModel.update(row, {
-        where: {
-          id: row.id,
-        },
-      });
-
       yield row;
 
       await new Promise((resolve) => setTimeout(resolve, 15));
     }
+
+    updateRow(row);
   });
 };
 

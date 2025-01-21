@@ -29,7 +29,7 @@ export const addRow = async (row: Omit<Row, "id">) => {
 };
 
 export const updateRow = async (row: Row) => {
-  await RowModel.update(row, {
+  RowModel.update(row, {
     where: {
       id: row.id,
     },

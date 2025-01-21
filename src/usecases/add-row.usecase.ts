@@ -45,13 +45,13 @@ export const addRowServerUseCase = server$(async (row: Omit<Row, "id">) => {
 
 export const useAddRowUseCase = () => {
   const { addRow } = useRowsStore();
-  const { addColumn: addColumnStore } = useColumnsStore();
+  const { addColumn } = useColumnsStore();
 
   const useUseCase = $(async (row: Omit<Row, "id">) => {
     const { newColumns, newRow } = await addRowServerUseCase(row);
 
     for (const col of newColumns) {
-      addColumnStore(col);
+      addColumn(col);
     }
 
     addRow(newRow);
