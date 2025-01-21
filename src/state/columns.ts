@@ -1,11 +1,12 @@
 import {
+  $,
   createContextId,
   type Signal,
   useContext,
   useContextProvider,
 } from "@builder.io/qwik";
 
-import { useColumnsLoader } from "~/services";
+import { useAddColumnAction, useColumnsLoader } from "~/services";
 
 export interface Column {
   name: string;
@@ -25,4 +26,15 @@ export const useColumns = () => {
   const columns = useContext(columnContext);
 
   return columns;
+};
+
+export const useAddColumn = () => {
+  const addColumn = useAddColumnAction();
+  const columns = useContext(columnContext);
+
+  return $(async (column: Column) => {
+    await addColumn(column);
+
+    columns.value = [...columns.value, column];
+  });
 };

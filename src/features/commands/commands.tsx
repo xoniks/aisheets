@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { $, component$ } from "@builder.io/qwik";
 import {
   TbColumnInsertRight,
   TbColumns3,
@@ -10,11 +10,51 @@ import {
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 import { useModals } from "~/components/hooks/modals/use-modals";
-import { useColumns } from "~/state";
+import { useAddColumn, useAddRow, useColumns } from "~/state";
 
 export const Commands = component$(() => {
   const columns = useColumns();
+  const addRow = useAddRow();
+  const addColumn = useAddColumn();
   const { openAddColumnModal } = useModals("addColumnModal");
+
+  const addFakeRows = $(async () => {
+    if (columns.value.length === 0) {
+      await addColumn({
+        name: "name",
+        type: "text",
+        output: null,
+        sortable: true,
+      });
+      await addColumn({
+        name: "age",
+        type: "text",
+        output: null,
+        sortable: true,
+      });
+
+      await addColumn({
+        name: "email",
+        type: "text",
+        output: null,
+        sortable: true,
+      });
+    }
+
+    addRow({
+      data: {
+        name: {
+          value: "John Doe",
+        },
+        age: {
+          value: "25",
+        },
+        email: {
+          value: "john.doe@x.com",
+        },
+      },
+    });
+  });
 
   return (
     <div class="flex h-12 w-full items-center justify-between border-t">
@@ -119,6 +159,7 @@ export const Commands = component$(() => {
           size="sm"
           look="outline"
           class="flex gap-1 border-purple-300 bg-purple-100 font-light"
+          onClick$={addFakeRows}
         >
           <TbPlayerPlay />
           Run Prompt

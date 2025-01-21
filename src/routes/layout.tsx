@@ -1,4 +1,4 @@
-import { component$, Slot, useErrorBoundary } from "@builder.io/qwik";
+import { component$, Slot } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
 import { ModalsProvider } from "~/components";
 import { NavBar } from "~/components/ui/navbar/navbar";
@@ -14,25 +14,13 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
   });
 };
 
-export const ErrorBoundary = component$(() => {
-  const error = useErrorBoundary();
-
-  if (error.error) {
-    return <div>Error: {error.error}</div>;
-  }
-
-  return <Slot />;
-});
-
 export default component$(() => {
   return (
     <>
       <NavBar />
-      <ErrorBoundary>
-        <ModalsProvider>
-          <Slot />
-        </ModalsProvider>
-      </ErrorBoundary>
+      <ModalsProvider>
+        <Slot />
+      </ModalsProvider>
     </>
   );
 });

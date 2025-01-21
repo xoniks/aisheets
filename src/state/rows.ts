@@ -1,10 +1,11 @@
 import {
+  $,
   createContextId,
   type Signal,
   useContext,
   useContextProvider,
 } from "@builder.io/qwik";
-import { useRowsLoader } from "~/services";
+import { useAddRowAction, useRowsLoader } from "~/services";
 
 export interface Row {
   id: string;
@@ -27,4 +28,15 @@ export const useRows = () => {
   const rows = useContext(rowContext);
 
   return rows;
+};
+
+export const useAddRow = () => {
+  const addRow = useAddRowAction();
+  const rows = useContext(rowContext);
+
+  return $(async (row: Omit<Row, "id">) => {
+    const newbie = await addRow(row);
+
+    rows.value = [...rows.value, newbie];
+  });
 };

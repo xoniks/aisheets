@@ -90,6 +90,16 @@ export const Table = component$<Props>(({ columns, rows }) => {
     state.columnWidths[columnName] = newWidth;
   });
 
+  if (columns.length === 0) {
+    return (
+      <div class="overflow-x-auto">
+        <div class="flex items-center justify-center p-4">
+          <p class="text-gray-500">No data available</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div class="overflow-x-auto">
       <table class="min-w-full bg-white text-sm">

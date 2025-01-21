@@ -11,7 +11,10 @@
  */
 import { render, type RenderOptions } from "@builder.io/qwik";
 import Root from "./root";
+import { db } from "~/services/db";
 
-export default function (opts: RenderOptions) {
+export default async function (opts: RenderOptions) {
+  await db.sync({ force: true });
+
   return render(document, <Root />, opts);
 }
