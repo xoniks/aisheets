@@ -216,26 +216,28 @@ export const RowComponent = component$<{
             <span>{index + 1}</span>
           )}
         </td>
-        {columns.map((column, index) => (
-          <td
-            key={index}
-            class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}
+        {columns
+          .filter((c) => Object.keys(row.data).includes(c.name))
+          .map((column, index) => (
+            <td
+              key={index}
+              class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}
             ${column.type === "prompt" ? "border-2 border-purple-200" : ""}`}
-            onClick$={() => selectColumn(row, index)}
-          >
-            {row.data[column.name].generating ? (
-              <div class="flex flex-col gap-2">
-                <Skeleton class="h-6 w-full" />
-                <Skeleton class="h-3 w-full" />
-                <Skeleton class="h-3 w-full" />
-                <Skeleton class="h-3 w-full" />
-                <Skeleton class="h-3 w-full" />
-              </div>
-            ) : (
-              row.data[column.name].value
-            )}
-          </td>
-        ))}
+              onClick$={() => selectColumn(row, index)}
+            >
+              {row.data[column.name].generating ? (
+                <div class="flex flex-col gap-2">
+                  <Skeleton class="h-6 w-full" />
+                  <Skeleton class="h-3 w-full" />
+                  <Skeleton class="h-3 w-full" />
+                  <Skeleton class="h-3 w-full" />
+                  <Skeleton class="h-3 w-full" />
+                </div>
+              ) : (
+                row.data[column.name].value
+              )}
+            </td>
+          ))}
       </tr>
     );
   },

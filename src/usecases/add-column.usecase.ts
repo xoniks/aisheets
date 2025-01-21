@@ -1,6 +1,6 @@
 import { $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
-import { useAddColumnAction, useUpdateRecordAction } from "~/services";
+import { addColumn, getAllRows, updateRow } from "~/services";
 import { RowModel } from "~/services/db/models/row";
 import { useColumnsStore, useRowsStore, type Column, type Row } from "~/state";
 
@@ -28,29 +28,37 @@ const useStreamServer = () => {
   });
 };
 
+export const addColumnUseCaseServer = server$(async (newColum: Column) => {
+  const rows = await getAllRows();
+
+  addColumn(newColum);
+
+  for (const row of rows) {
+    row.data[newColum.name] = {
+      generating: newColum.type === "prompt",
+      value: "",
+    };
+
+    updateRow(row);
+  }
+
+  return {
+    rows,
+  };
+});
+
 export const useAddColumnUseCase = () => {
-  const { state: rows, updateRow: update } = useRowsStore();
-  const { addColumn: add } = useColumnsStore();
-  const addColumn = useAddColumnAction();
-  const updateRow = useUpdateRecordAction();
+  const { updateRow } = useRowsStore();
+  const { addColumn } = useColumnsStore();
   const streamData = useStreamServer();
 
   const useUseCase = $(async (newColum: Column) => {
-    const addNewColumnToRow = async (newColum: Column) => {
-      for (const row of rows.value) {
-        row.data[newColum.name] = {
-          generating: newColum.type === "prompt",
-          value: "",
-        };
+    const { rows } = await addColumnUseCaseServer(newColum);
+    for (const row of rows) {
+      updateRow(row);
+    }
 
-        update(row);
-        await updateRow(row);
-      }
-    };
-
-    await addNewColumnToRow(newColum);
-    add(newColum);
-    await addColumn(newColum);
+    addColumn(newColum);
 
     if (newColum.type !== "prompt") return;
 
@@ -58,11 +66,11 @@ export const useAddColumnUseCase = () => {
       const response = await streamData(row, newColum);
 
       for await (const value of response) {
-        update(value);
+        updateRow(value);
       }
     };
 
-    for (const row of rows.value) {
+    for (const row of rows) {
       stream(row);
 
       await new Promise((resolve) => setTimeout(resolve, 100));

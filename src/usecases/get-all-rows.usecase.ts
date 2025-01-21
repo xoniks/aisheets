@@ -1,5 +1,4 @@
-import { useRowsLoader } from "~/services";
-import { useRowsStateProvider, useRowsStore } from "~/state";
+import { useRowsLoader, useRowsStateProvider, useRowsStore } from "~/state";
 
 export const useGetAllRowsUseCase = () => {
   const rows = useRowsLoader();

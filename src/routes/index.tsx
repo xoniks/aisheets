@@ -5,7 +5,7 @@ import { Table } from "~/components";
 import { AddColumn, Commands } from "~/features";
 import { useHome } from "~/routes/useHome";
 
-export { useRowsLoader, useColumnsLoader } from "~/services";
+export { useRowsLoader, useColumnsLoader } from "~/state";
 
 export default component$(() => {
   const { columns, rows, onCreateColumn } = useHome();

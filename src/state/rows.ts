@@ -5,6 +5,8 @@ import {
   useContext,
   useContextProvider,
 } from "@builder.io/qwik";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import { getAllRows } from "~/services";
 
 export interface Row {
   id: string;
@@ -20,6 +22,8 @@ const rowContext = createContextId<Signal<Row[]>>("rows.context");
 export const useRowsStateProvider = (rows: Signal<Row[]>) => {
   useContextProvider(rowContext, rows);
 };
+
+export const useRowsLoader = routeLoader$<Row[]>(getAllRows);
 
 export const useRowsStore = () => {
   const rows = useContext(rowContext);

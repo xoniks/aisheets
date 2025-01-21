@@ -19,17 +19,9 @@ export const Commands = component$(() => {
   const { state: columns } = useColumnsStore();
   const addRowUseCase = useAddRowUseCase();
 
-  const addFakeRows = $(async () => {
+  const addFakeRows = $(() => {
     addRowUseCase({
       data: {
-        ...columns.value.reduce((acc, column) => {
-          acc[column.name] = {
-            generating: column.type === "prompt",
-            value: "",
-          };
-
-          return acc;
-        }, {} as any),
         name: {
           value: "John Doe",
         },

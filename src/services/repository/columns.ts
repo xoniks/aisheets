@@ -1,4 +1,3 @@
-import { routeLoader$, server$ } from "@builder.io/qwik-city";
 import { ColumnModel } from "~/services/db/models/column";
 
 interface Column {
@@ -8,7 +7,7 @@ interface Column {
   output: "text" | "array" | "number" | "boolean" | "object" | null;
 }
 
-export const useColumnsLoader = routeLoader$<Column[]>(async () => {
+export const getAllColumns = async () => {
   const columns = await ColumnModel.findAll();
 
   return columns.map((r) => ({
@@ -17,16 +16,15 @@ export const useColumnsLoader = routeLoader$<Column[]>(async () => {
     sortable: r.sortable,
     output: r.output,
   }));
-});
+};
 
-export const useAddColumnAction = () =>
-  server$(async (column: Column) => {
-    const added = await ColumnModel.create(column);
+export const addColumn = async (column: Column) => {
+  const added = await ColumnModel.create(column);
 
-    return {
-      name: added.name,
-      type: added.type,
-      sortable: added.sortable,
-      output: added.output,
-    };
-  });
+  return {
+    name: added.name,
+    type: added.type,
+    sortable: added.sortable,
+    output: added.output,
+  };
+};
