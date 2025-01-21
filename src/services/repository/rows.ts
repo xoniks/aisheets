@@ -1,4 +1,3 @@
-import { server$ } from "@builder.io/qwik-city";
 import { RowModel } from "~/services/db/models/row";
 
 interface Row {

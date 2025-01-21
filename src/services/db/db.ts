@@ -12,6 +12,7 @@ export const db = new Sequelize({
   },
 });
 
+//TODO: Move to start up method
 try {
   await db.authenticate();
   consola.success("🔌 Connection has been established successfully.");
