@@ -29,3 +29,18 @@ export const useAddRowAction = () =>
       data: added.data,
     };
   });
+
+export const useUpdateRecordAction = () =>
+  server$(async (row: Row) => {
+    //TODO: Review if the await is necessary
+    RowModel.update(row, {
+      where: {
+        id: row.id,
+      },
+    });
+
+    return Promise.resolve({
+      id: row.id,
+      data: row.data,
+    });
+  });

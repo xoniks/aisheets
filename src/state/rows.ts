@@ -5,7 +5,6 @@ import {
   useContext,
   useContextProvider,
 } from "@builder.io/qwik";
-import { useAddRowAction, useRowsLoader } from "~/services";
 
 export interface Row {
   id: string;
@@ -18,25 +17,28 @@ export interface Row {
 }
 
 const rowContext = createContextId<Signal<Row[]>>("rows.context");
-const useRowsStateProvider = (rows: Signal<Row[]>) => {
+export const useRowsStateProvider = (rows: Signal<Row[]>) => {
   useContextProvider(rowContext, rows);
 };
 
-export const useRows = () => {
-  const rowsData = useRowsLoader();
-  useRowsStateProvider(rowsData);
+export const useRowsStore = () => {
   const rows = useContext(rowContext);
 
-  return rows;
-};
-
-export const useAddRow = () => {
-  const addRow = useAddRowAction();
-  const rows = useContext(rowContext);
-
-  return $(async (row: Omit<Row, "id">) => {
-    const newbie = await addRow(row);
-
-    rows.value = [...rows.value, newbie];
-  });
+  return {
+    state: rows,
+    replace: $((replaced: Row[]) => {
+      rows.value = [...replaced];
+    }),
+    addRow: $((newbie: Row) => {
+      rows.value = [...rows.value, newbie];
+    }),
+    updateRow: $((updated: Row) => {
+      rows.value = [
+        ...rows.value.map((c) => (c.id === updated.id ? updated : c)),
+      ];
+    }),
+    deleteRow: $((deleted: Row) => {
+      rows.value = rows.value.filter((c) => c.id !== deleted.id);
+    }),
+  };
 };

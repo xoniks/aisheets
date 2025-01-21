@@ -10,39 +10,26 @@ import {
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 import { useModals } from "~/components/hooks/modals/use-modals";
-import { useAddColumn, useAddRow, useColumns } from "~/state";
+import { useAddRowUseCase } from "~/usecases/add-row.usecase";
+import { useColumnsStore } from "~/state";
 
 export const Commands = component$(() => {
-  const columns = useColumns();
-  const addRow = useAddRow();
-  const addColumn = useAddColumn();
   const { openAddColumnModal } = useModals("addColumnModal");
 
+  const { state: columns } = useColumnsStore();
+  const addRowUseCase = useAddRowUseCase();
+
   const addFakeRows = $(async () => {
-    if (columns.value.length === 0) {
-      await addColumn({
-        name: "name",
-        type: "text",
-        output: null,
-        sortable: true,
-      });
-      await addColumn({
-        name: "age",
-        type: "text",
-        output: null,
-        sortable: true,
-      });
-
-      await addColumn({
-        name: "email",
-        type: "text",
-        output: null,
-        sortable: true,
-      });
-    }
-
-    addRow({
+    addRowUseCase({
       data: {
+        ...columns.value.reduce((acc, column) => {
+          acc[column.name] = {
+            generating: column.type === "prompt",
+            value: "",
+          };
+
+          return acc;
+        }, {} as any),
         name: {
           value: "John Doe",
         },
