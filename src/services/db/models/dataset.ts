@@ -1,9 +1,5 @@
 import { isDev } from "@builder.io/qwik";
-import type {
-  Association,
-  HasManyCreateAssociationMixin,
-  NonAttribute,
-} from "sequelize";
+import type { Association, NonAttribute } from "sequelize";
 import {
   type CreationOptional,
   DataTypes,
@@ -26,7 +22,7 @@ export class DatasetModel extends Model<
 
   declare columns: NonAttribute<Column[]>;
 
-  declare createColumn: HasManyCreateAssociationMixin<ColumnModel, "datasetId">;
+  // declare createColumn: HasManyCreateAssociationMixin<ColumnModel, "datasetId">;
 
   declare static associations: {
     columns: Association<DatasetModel, ColumnModel>;
