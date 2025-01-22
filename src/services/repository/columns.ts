@@ -10,11 +10,8 @@ export const getAllColumns = async (): Promise<Column[]> => {
   return columns.map((column) => ({
     id: column.id,
     name: column.name,
-    type: column.type as Column["type"],
-    process: {
-      modelName: "",
-      prompt: "",
-    },
+    type: column.type,
+    kind: column.kind,
     cells: cells
       .filter((cell) => cell.columnId === column.id)
       .map((cell) => ({
@@ -35,5 +32,6 @@ export const addColumn = async (
     id: added.id as string,
     name: added.name,
     type: added.type,
+    kind: added.kind,
   };
 };

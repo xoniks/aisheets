@@ -8,13 +8,17 @@ import {
 } from "sequelize";
 import { db } from "~/services/db";
 
+//Review the path
+import { type ColumnKind, type ColumnType } from "~/state";
+
 export class ColumnModel extends Model<
   InferAttributes<ColumnModel>,
   InferCreationAttributes<ColumnModel>
 > {
   declare id: CreationOptional<string>;
   declare name: string;
-  declare type: string;
+  declare type: ColumnType;
+  declare kind: ColumnKind;
 }
 
 ColumnModel.init(
@@ -29,6 +33,10 @@ ColumnModel.init(
       allowNull: false,
     },
     type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    kind: {
       type: DataTypes.STRING,
       allowNull: false,
     },

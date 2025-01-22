@@ -4,11 +4,10 @@ import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select, Textarea } from "~/components";
 
-import { type CreateColumn, type Column } from "~/state";
+import { type CreateColumn, type ColumnType } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface SidebarProps {
-  type: Column["type"];
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
@@ -18,9 +17,9 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
     const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
       useModals("addDynamicColumnSidebar");
 
-    const type = useSignal<NonNullable<Column["type"]>>("text");
-    const name = useSignal<Column["name"]>("");
-    const rowsGenerated = useSignal("10");
+    const type = useSignal<NonNullable<ColumnType>>("text");
+    const name = useSignal("");
+    const rowsToGenerate = useSignal("10");
 
     useTask$(({ track }) => {
       track(() => type);
@@ -29,15 +28,19 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
       name.value = "";
     });
 
-    const onSave = $(() => {
+    const onCreate = $(() => {
       if (!name.value) return;
 
       const column: CreateColumn = {
         name: name.value,
         type: type.value,
-        modelName: "HF MODEL",
-        prompt: "HF PROMPT",
-        rowsGenerated: parseInt(rowsGenerated.value),
+        kind: "dynamic",
+        process: {
+          modelName: "HF Model",
+          prompt: "Prompt Example",
+          offset: 0,
+          limit: Number(rowsToGenerate.value),
+        },
       };
 
       closeAddDynamicColumnSidebar();
@@ -92,13 +95,13 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
                 id="column-rows"
                 type="number"
                 class="h-10"
-                bind:value={rowsGenerated}
+                bind:value={rowsToGenerate}
               />
             </div>
           </div>
 
           <div class="flex h-16 w-full items-center justify-center">
-            <Button size="sm" class="w-full rounded-sm p-2" onClick$={onSave}>
+            <Button size="sm" class="w-full rounded-sm p-2" onClick$={onCreate}>
               Create new column
             </Button>
           </div>

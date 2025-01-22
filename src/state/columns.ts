@@ -8,12 +8,21 @@ import {
 import { routeLoader$ } from "@builder.io/qwik-city";
 import { getAllColumns } from "~/services";
 
-export interface CreateColumn {
-  name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
+export type ColumnType = "text" | "array" | "number" | "boolean" | "object";
+export type ColumnKind = "static" | "dynamic";
+
+interface Process {
   modelName: string;
   prompt: string;
-  rowsGenerated: number;
+  offset: number;
+  limit: number;
+}
+
+export interface CreateColumn {
+  name: string;
+  type: ColumnType;
+  kind: ColumnKind;
+  process?: Process;
 }
 
 export type Cell = {
@@ -26,11 +35,9 @@ export type Cell = {
 export interface Column {
   id: string;
   name: string;
-  type: "text" | "array" | "number" | "boolean" | "object";
-  process: {
-    modelName: string;
-    prompt: string;
-  };
+  type: ColumnType;
+  kind: ColumnKind;
+  process?: Process;
   cells: Cell[];
 }
 

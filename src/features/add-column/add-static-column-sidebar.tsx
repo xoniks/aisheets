@@ -4,11 +4,11 @@ import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select } from "~/components";
 
-import { type CreateColumn, type Column } from "~/state";
+import { type CreateColumn, type ColumnType } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface SidebarProps {
-  type: Column["type"];
+  type: ColumnType;
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
@@ -18,8 +18,8 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
       useModals("addStaticColumnSidebar");
 
     const types = ["text", "array", "number", "boolean", "object"];
-    const newType = useSignal<Column["type"]>(type);
-    const name = useSignal<Column["name"]>("");
+    const newType = useSignal<ColumnType>(type);
+    const name = useSignal("");
 
     useTask$(({ track }) => {
       track(() => type);
@@ -35,9 +35,7 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
       onCreateColumn({
         name: name.value,
         type: newType.value,
-        modelName: "HF MODEL",
-        prompt: "HF PROMPT",
-        rowsGenerated: 10,
+        kind: "static",
       });
     });
 

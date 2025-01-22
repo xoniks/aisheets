@@ -12,9 +12,15 @@ import {
 
 import { Button, Modal } from "~/components";
 
-import { type CreateColumn, type Column } from "~/state";
+import {
+  type CreateColumn,
+  type Column,
+  type ColumnType,
+  type ColumnKind,
+} from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 import { AddDynamicColumnSidebar } from "~/features/add-column/add-dynamic-column-sidebar";
+import { AddStaticColumnSidebar } from "~/features/add-column/add-static-column-sidebar";
 
 interface Props {
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
@@ -24,16 +30,27 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   const { isOpenAddColumnModal, closeAddColumnModal } =
     useModals("addColumnModal");
   const { openAddDynamicColumnSidebar } = useModals("addDynamicColumnSidebar");
+  const { openAddStaticColumnSidebar } = useModals("addStaticColumnSidebar");
 
   const columnType = useSignal<Column["type"]>("text");
 
-  const openSidebar = $((type: Column["type"]) => {
+  const openSidebar = $((type: ColumnType, kind: ColumnKind) => {
     closeAddColumnModal();
 
     columnType.value = type;
 
-    return openAddDynamicColumnSidebar();
+    if (kind === "dynamic") return openAddDynamicColumnSidebar();
+
+    openAddStaticColumnSidebar();
   });
+
+  const openDynamicSidebar = $((type: ColumnType) =>
+    openSidebar(type, "dynamic"),
+  );
+
+  const openStaticSidebar = $((type: ColumnType) =>
+    openSidebar(type, "static"),
+  );
 
   return (
     <Modal.Root bind:show={isOpenAddColumnModal} class="h-max w-full">
@@ -52,7 +69,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-blue-200"
-              onClick$={() => openSidebar("text")}
+              onClick$={() => openStaticSidebar("text")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                 <TbAlignJustified />
@@ -63,7 +80,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-rose-100"
-              onClick$={() => openSidebar("number")}
+              onClick$={() => openStaticSidebar("number")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                 <TbHash />
@@ -74,7 +91,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-lime-100"
-              onClick$={() => openSidebar("boolean")}
+              onClick$={() => openStaticSidebar("boolean")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                 <TbToggleLeft />
@@ -85,7 +102,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-yellow-100"
-              onClick$={() => openSidebar("object")}
+              onClick$={() => openStaticSidebar("object")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                 <TbBraces />
@@ -96,7 +113,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-indigo-300"
-              onClick$={() => openSidebar("array")}
+              onClick$={() => openStaticSidebar("array")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
                 <TbBrackets />
@@ -123,7 +140,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-blue-300"
-              onClick$={() => openSidebar("array")}
+              onClick$={() => openDynamicSidebar("text")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
                 <TbKeyboard />
@@ -153,16 +170,13 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
           </div>
         </div>
       </Modal.Panel>
-      {/* 
+
       <AddStaticColumnSidebar
         type={columnType.value}
         onCreateColumn={onCreateColumn}
-      /> */}
-
-      <AddDynamicColumnSidebar
-        type={columnType.value}
-        onCreateColumn={onCreateColumn}
       />
+
+      <AddDynamicColumnSidebar onCreateColumn={onCreateColumn} />
     </Modal.Root>
   );
 });

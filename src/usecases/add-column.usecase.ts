@@ -6,7 +6,8 @@ import { type CreateColumn, type Column } from "~/state";
 interface DynamicData {
   modelName: string;
   prompt: string;
-  rows: number;
+  limit: number;
+  offset: number;
 }
 
 interface DynamicDataResponse {
@@ -32,47 +33,58 @@ export const createDynamicData = async (
 
 export const useAddColumnUseCase = () =>
   server$(async (newColum: CreateColumn): Promise<Column> => {
-    const { name, type, prompt, modelName, rowsGenerated } = newColum;
+    const { name, type, kind, process } = newColum;
 
     const column = await addColumn({
       name,
       type,
+      kind,
     });
 
     const cells = [];
 
-    const data = await createDynamicData({
-      prompt,
-      modelName,
-      rows: rowsGenerated,
-    });
+    if (kind === "dynamic") {
+      const { limit, modelName, offset, prompt } = process!;
 
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-
-      const cell = await addCell({
-        columnId: column.id,
-        error: row.error,
-        rowIdx: i,
-        value: row.value,
+      const data = await createDynamicData({
+        prompt,
+        modelName,
+        limit,
+        offset,
       });
 
-      cells.push(cell);
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+
+        const cell = await addCell({
+          columnId: column.id,
+          error: row.error,
+          rowIdx: i,
+          value: row.value,
+        });
+
+        cells.push(cell);
+      }
+
+      return {
+        id: column.id,
+        name: column.name,
+        type: column.type,
+        kind: column.kind,
+        cells: cells.map((cell) => ({
+          id: cell.id,
+          idx: cell.rowIdx,
+          value: cell.value,
+          error: cell.error,
+        })),
+        process: {
+          modelName,
+          prompt,
+          offset,
+          limit,
+        },
+      };
     }
 
-    return {
-      id: column.id,
-      name: column.name,
-      type: column.type as Column["type"],
-      cells: cells.map((cell) => ({
-        id: cell.id,
-        idx: cell.rowIdx,
-        value: cell.value,
-        error: cell.error,
-      })),
-      process: {
-        modelName,
-        prompt,
-      },
-    };
+    throw new Error("Not implemented static column creation");
   });

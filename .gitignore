@@ -41,6 +41,8 @@ lerna-debug.log*
 .yarn/*
 !.yarn/releases
 
-
 .nx/cache
 .nx/workspace-data
+
+# DB 
+.data
