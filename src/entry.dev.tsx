@@ -10,8 +10,10 @@
  * - Optimizer/Serialization/Deserialization code is not exercised!
  */
 import { render, type RenderOptions } from "@builder.io/qwik";
-import Root from "./root";
+
 import { db } from "~/services/db";
+
+import Root from "./root";
 
 export default async function (opts: RenderOptions) {
   await db.sync({ force: true });

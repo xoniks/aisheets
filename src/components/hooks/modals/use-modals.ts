@@ -1,5 +1,6 @@
 import { $, useContext, useSignal, useTask$ } from "@builder.io/qwik";
-import { type Status, type ID } from "~/components/hooks/modals/config";
+
+import { type ID, type Status } from "~/components/hooks/modals/config";
 import { modalsContext } from "~/components/hooks/modals/context";
 import { wrap } from "~/components/hooks/modals/named";
 

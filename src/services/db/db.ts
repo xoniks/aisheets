@@ -4,8 +4,10 @@ import { Sequelize } from "sequelize";
 
 // https://sequelize.org/docs/v6/other-topics/typescript/
 
+const isTest = process.env.NODE_ENV === "test";
+
 export const db = new Sequelize({
-  storage: "./.data/db.sqlite",
+  storage: isTest ? ":memory:" : "./.data/db.sqlite",
   dialect: "sqlite",
   logging: (sql) => {
     if (isDev) {

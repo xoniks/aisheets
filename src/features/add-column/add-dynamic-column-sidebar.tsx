@@ -1,11 +1,10 @@
 import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
-
 import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
-import { Sidebar, Button, Input, Label, Select, Textarea } from "~/components";
 
-import { type CreateColumn, type ColumnType } from "~/state";
+import { Button, Input, Label, Select, Sidebar, Textarea } from "~/components";
 import { useModals } from "~/components/hooks/modals/use-modals";
+import { type ColumnType, type CreateColumn } from "~/state";
 
 interface SidebarProps {
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;

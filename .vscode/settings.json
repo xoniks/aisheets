@@ -1,0 +1,12 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  "cSpell.words": [
+    "qwik",
+    "Argilla",
+    "qwikest",
+    "tablericons"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always"
+  }
+}

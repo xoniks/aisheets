@@ -1,4 +1,4 @@
-import { component$, type QRL, useSignal, $ } from "@builder.io/qwik";
+import { $, component$, type QRL, useSignal } from "@builder.io/qwik";
 import {
   TbAlignJustified,
   TbBraces,
@@ -11,16 +11,15 @@ import {
 } from "@qwikest/icons/tablericons";
 
 import { Button, Modal } from "~/components";
-
-import {
-  type CreateColumn,
-  type Column,
-  type ColumnType,
-  type ColumnKind,
-} from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 import { AddDynamicColumnSidebar } from "~/features/add-column/add-dynamic-column-sidebar";
 import { AddStaticColumnSidebar } from "~/features/add-column/add-static-column-sidebar";
+import {
+  type Column,
+  type ColumnKind,
+  type ColumnType,
+  type CreateColumn,
+} from "~/state";
 
 interface Props {
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;

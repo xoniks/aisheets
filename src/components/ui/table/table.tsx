@@ -7,7 +7,8 @@ import {
   TbSparkles,
   TbToggleLeft,
 } from "@qwikest/icons/tablericons";
-import { type ColumnKind, type ColumnType, type Column } from "~/state";
+
+import { type Column, type ColumnKind, type ColumnType } from "~/state";
 
 interface Props {
   columns: Signal<Column[]>;

@@ -6,6 +6,7 @@ import {
   useContextProvider,
 } from "@builder.io/qwik";
 import { routeLoader$ } from "@builder.io/qwik-city";
+
 import { getAllColumns } from "~/services";
 
 export type ColumnType = "text" | "array" | "number" | "boolean" | "object";

@@ -1,5 +1,6 @@
 import { component$, Slot } from "@builder.io/qwik";
 import type { RequestHandler } from "@builder.io/qwik-city";
+
 import { ModalsProvider } from "~/components";
 import { NavBar } from "~/components/ui/navbar/navbar";
 

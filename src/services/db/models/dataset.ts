@@ -1,15 +1,16 @@
 import { isDev } from "@builder.io/qwik";
-import type { Association, NonAttribute } from "sequelize";
 import {
+  type Association,
   type CreationOptional,
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
   Model,
+  type NonAttribute,
 } from "sequelize";
+
 import { db } from "~/services/db";
 import { ColumnModel } from "~/services/db/models/column";
-
 //Review the path
 import { type Column } from "~/state";
 

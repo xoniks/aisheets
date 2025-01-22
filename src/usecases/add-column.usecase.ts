@@ -1,6 +1,7 @@
 import { server$ } from "@builder.io/qwik-city";
+
 import { addColumn } from "~/services";
-import { type CreateColumn, type Column } from "~/state";
+import { type Column, type CreateColumn } from "~/state";
 
 interface DynamicData {
   modelName: string;

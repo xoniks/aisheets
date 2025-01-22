@@ -1,12 +1,13 @@
 import { isDev } from "@builder.io/qwik";
-import type { ForeignKey } from "sequelize";
 import {
   type CreationOptional,
   DataTypes,
+  type ForeignKey,
   type InferAttributes,
   type InferCreationAttributes,
   Model,
 } from "sequelize";
+
 import { db } from "~/services/db";
 import type { ColumnModel } from "~/services/db/models/column";
 

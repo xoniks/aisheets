@@ -1,4 +1,5 @@
 import { type QRL, type Signal } from "@builder.io/qwik";
+
 import { type ID } from "~/components/hooks/modals/config";
 
 type Modal<N extends string> = {

@@ -7,6 +7,7 @@ import {
   type InferCreationAttributes,
   Model,
 } from "sequelize";
+
 import { db } from "~/services/db";
 import type { ColumnModel } from "~/services/db/models/column";
 

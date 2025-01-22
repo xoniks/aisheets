@@ -11,10 +11,10 @@ import {
   type InferCreationAttributes,
   Model,
 } from "sequelize";
+
 import { db } from "~/services/db";
 import { ColumnCellModel } from "~/services/db/models/cell";
 import { ProcessModel } from "~/services/db/models/process";
-
 //Review the path
 import { type Cell, type ColumnKind, type ColumnType } from "~/state";
 

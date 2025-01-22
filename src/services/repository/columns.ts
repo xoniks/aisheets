@@ -1,6 +1,6 @@
 import { ColumnModel } from "~/services/db/models/column";
 import { ProcessModel } from "~/services/db/models/process";
-import type { Process, Cell, Column } from "~/state";
+import type { Cell, Column, Process } from "~/state";
 
 export const getAllColumns = async (): Promise<Column[]> => {
   const columns = await ColumnModel.findAll({

@@ -8,8 +8,9 @@ import {
   TbPlayerPlay,
   TbRefresh,
 } from "@qwikest/icons/tablericons";
-import { Button, Popover, Select, buttonVariants } from "~/components/ui";
+
 import { useModals } from "~/components/hooks/modals/use-modals";
+import { Button, buttonVariants, Popover, Select } from "~/components/ui";
 import { useColumnsStore } from "~/state";
 
 export const Commands = component$(() => {
