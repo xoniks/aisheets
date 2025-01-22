@@ -11,7 +11,7 @@ import { getAllColumns } from "~/services";
 export type ColumnType = "text" | "array" | "number" | "boolean" | "object";
 export type ColumnKind = "static" | "dynamic";
 
-interface Process {
+export interface Process {
   modelName: string;
   prompt: string;
   offset: number;
@@ -28,7 +28,7 @@ export interface CreateColumn {
 export type Cell = {
   id: string;
   idx: number;
-  value: string;
+  value?: string;
   error?: string;
 };
 

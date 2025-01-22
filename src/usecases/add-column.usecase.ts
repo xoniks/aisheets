@@ -34,13 +34,15 @@ export const useAddColumnUseCase = () =>
   server$(async (newColum: CreateColumn): Promise<Column> => {
     const { name, type, kind, process } = newColum;
 
-    const column = await addColumn({
-      name,
-      type,
-      kind,
-    });
+    const column = await addColumn(
+      {
+        name,
+        type,
+        kind,
+      },
+      process,
+    );
 
-    const cells = [];
     if (kind === "dynamic") {
       const { limit, modelName, offset, prompt } = process!;
 
@@ -52,14 +54,13 @@ export const useAddColumnUseCase = () =>
       });
 
       for (let i = 0; i < data.length; i++) {
-        const row = data[i];
+        const cell = data[i];
 
-        const cell = await column.createCell({
+        await column.addCell({
           idx: i,
-          value: row.value,
+          value: cell.value,
+          error: cell.error,
         });
-
-        cells.push(cell);
       }
 
       return {
@@ -67,7 +68,7 @@ export const useAddColumnUseCase = () =>
         name: column.name,
         type: column.type,
         kind: column.kind,
-        cells: cells.map((cell) => ({
+        cells: column.cells.map((cell) => ({
           id: cell.id,
           idx: cell.idx,
           value: cell.value,

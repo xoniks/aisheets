@@ -17,7 +17,7 @@ export class ColumnCellModel extends Model<
   declare id: CreationOptional<string>;
   declare idx: number;
   declare value: string;
-  declare error?: string;
+  declare error: string;
 
   declare columnId?: ForeignKey<ColumnModel["id"]>;
   declare column?: NonAttribute<ColumnModel>;
@@ -44,7 +44,7 @@ ColumnCellModel.init(
     },
     error: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
   },
   {
