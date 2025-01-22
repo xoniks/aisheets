@@ -20,12 +20,15 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
     const type = useSignal<NonNullable<ColumnType>>("text");
     const name = useSignal("");
     const rowsToGenerate = useSignal("10");
+    const prompt = useSignal("");
 
     useTask$(({ track }) => {
-      track(() => type);
+      track(isOpenAddDynamicColumnSidebar);
 
       type.value = "text";
       name.value = "";
+      prompt.value = "";
+      rowsToGenerate.value = "10";
     });
 
     const onCreate = $(() => {
@@ -37,7 +40,7 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
         kind: "dynamic",
         process: {
           modelName: "HF Model",
-          prompt: "Prompt Example",
+          prompt: prompt.value,
           offset: 0,
           limit: Number(rowsToGenerate.value),
         },
@@ -88,7 +91,7 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
               </Select.Root>
 
               <Label for="column-prompt">Prompt template</Label>
-              <Textarea id="column-prompt" />
+              <Textarea id="column-prompt" bind:value={prompt} />
 
               <Label for="column-rows">Rows generated</Label>
               <Input

@@ -53,15 +53,15 @@ export const useAddColumnUseCase = () =>
         offset,
       });
 
-      for (let i = 0; i < data.length; i++) {
-        const cell = data[i];
-
-        await column.addCell({
-          idx: i,
-          value: cell.value,
-          error: cell.error,
-        });
-      }
+      await Promise.all(
+        data.map((cell, idx) =>
+          column.addCell({
+            idx,
+            value: cell.value,
+            error: cell.error,
+          }),
+        ),
+      );
 
       return {
         id: column.id,
