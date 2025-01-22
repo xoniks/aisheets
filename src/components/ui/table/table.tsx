@@ -4,9 +4,10 @@ import {
   TbBraces,
   TbBrackets,
   TbHash,
+  TbSparkles,
   TbToggleLeft,
 } from "@qwikest/icons/tablericons";
-import { type Column } from "~/state";
+import { ColumnKind, ColumnType, type Column } from "~/state";
 
 interface Props {
   columns: Signal<Column[]>;
@@ -19,11 +20,15 @@ const Icons: Record<Column["type"], any> = {
   object: TbBraces,
   array: TbBrackets,
 };
-const ColumnIcon = component$<{ type: Column["type"] }>((props) => {
-  const Icon = Icons[props.type];
+const ColumnIcon = component$<{ type: ColumnType; kind: ColumnKind }>(
+  ({ type, kind }) => {
+    if (kind === "dynamic") return <TbSparkles />;
 
-  return <Icon />;
-});
+    const Icon = Icons[type];
+
+    return <Icon />;
+  },
+);
 
 export const Table = component$<Props>(({ columns }) => {
   const state = useStore<{
@@ -82,7 +87,7 @@ const TableHeader = component$<{ columns: Column[] }>(({ columns }) => (
         >
           <div class="flex flex-row items-center justify-between">
             <div class="flex w-full items-center gap-1 px-2">
-              <ColumnIcon type={column.type} />
+              <ColumnIcon type={column.type} kind={column.kind} />
               {column.name}
             </div>
             <div class="h-8  w-2 cursor-col-resize" />
