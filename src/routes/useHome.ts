@@ -1,21 +1,21 @@
 import { $ } from "@builder.io/qwik";
-import { type Column } from "~/state";
+import { useColumnsStore, useLoadColumns, type CreateColumn } from "~/state";
 import { useAddColumnUseCase } from "~/usecases/add-column.usecase";
-import { useGetAllColumnsUseCase } from "~/usecases/get-all-columns.usecase";
-import { useGetAllRowsUseCase } from "~/usecases/get-all-rows.usecase";
 
 export const useHome = () => {
-  const columns = useGetAllColumnsUseCase();
-  const rows = useGetAllRowsUseCase();
-  const addNewColumnUseCase = useAddColumnUseCase();
+  const columns = useLoadColumns();
+  const { addColumn } = useColumnsStore();
 
-  const onCreateColumn = $(async (newColum: Column) => {
-    await addNewColumnUseCase(newColum);
+  const execute = useAddColumnUseCase();
+
+  const onCreateColumn = $(async (createColumn: CreateColumn) => {
+    const column = await execute(createColumn);
+
+    addColumn(column);
   });
 
   return {
     columns,
-    rows,
     onCreateColumn,
   };
 };

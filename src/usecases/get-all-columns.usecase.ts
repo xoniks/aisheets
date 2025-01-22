@@ -1,14 +1,7 @@
-import {
-  useColumnsLoader,
-  useColumnsStore,
-  useColumnStateProvider,
-} from "~/state";
+import { useLoadColumns } from "~/state";
 
 export const useGetAllColumnsUseCase = () => {
-  const columns = useColumnsLoader();
-  useColumnStateProvider(columns);
+  const columns = useLoadColumns();
 
-  const { state } = useColumnsStore();
-
-  return state;
+  return columns;
 };

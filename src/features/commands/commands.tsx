@@ -1,4 +1,4 @@
-import { $, component$ } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import {
   TbColumnInsertRight,
   TbColumns3,
@@ -10,30 +10,12 @@ import {
 } from "@qwikest/icons/tablericons";
 import { Button, Popover, Select, buttonVariants } from "~/components/ui";
 import { useModals } from "~/components/hooks/modals/use-modals";
-import { useAddRowUseCase } from "~/usecases/add-row.usecase";
 import { useColumnsStore } from "~/state";
 
 export const Commands = component$(() => {
   const { openAddColumnModal } = useModals("addColumnModal");
 
   const { state: columns } = useColumnsStore();
-  const addRowUseCase = useAddRowUseCase();
-
-  const addFakeRows = $(() => {
-    addRowUseCase({
-      data: {
-        name: {
-          value: "John Doe",
-        },
-        age: {
-          value: "25",
-        },
-        email: {
-          value: "john.doe@x.com",
-        },
-      },
-    });
-  });
 
   return (
     <div class="flex h-12 w-full items-center justify-between border-t">
@@ -138,7 +120,6 @@ export const Commands = component$(() => {
           size="sm"
           look="outline"
           class="flex gap-1 border-purple-300 bg-purple-100 font-light"
-          onClick$={addFakeRows}
         >
           <TbPlayerPlay />
           Run Prompt

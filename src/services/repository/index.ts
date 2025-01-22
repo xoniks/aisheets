@@ -1,2 +1,2 @@
+export * from "./cell";
 export * from "./columns";
-export * from "./rows";

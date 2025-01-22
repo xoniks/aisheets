@@ -4,39 +4,40 @@ import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select, Textarea } from "~/components";
 
-import { type Column } from "~/state";
+import { type CreateColumn, type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface SidebarProps {
   type: Column["type"];
-  onCreateColumn: QRL<(column: Column) => void>;
+  onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
+const outputType = ["text", "array", "number", "boolean", "object"];
 export const AddDynamicColumnSidebar = component$<SidebarProps>(
-  ({ onCreateColumn, type }) => {
+  ({ onCreateColumn }) => {
     const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
       useModals("addDynamicColumnSidebar");
 
-    const outputType = ["text", "array", "number", "boolean", "object"];
-    const newOutputType = useSignal<NonNullable<Column["output"]>>("text");
+    const type = useSignal<NonNullable<Column["type"]>>("text");
     const name = useSignal<Column["name"]>("");
-    const rowsGenerated = useSignal("100");
+    const rowsGenerated = useSignal("10");
 
     useTask$(({ track }) => {
       track(() => type);
 
-      newOutputType.value = "text";
+      type.value = "text";
       name.value = "";
     });
 
     const onSave = $(() => {
       if (!name.value) return;
 
-      const column: Column = {
+      const column: CreateColumn = {
         name: name.value,
-        type: "prompt",
-        output: newOutputType.value,
-        sortable: false,
+        type: type.value,
+        modelName: "HF MODEL",
+        prompt: "HF PROMPT",
+        rowsGenerated: parseInt(rowsGenerated.value),
       };
 
       closeAddDynamicColumnSidebar();
@@ -67,7 +68,7 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
               />
 
               <Label for="column-output-type">Output type</Label>
-              <Select.Root id="column-output-type" bind:value={newOutputType}>
+              <Select.Root id="column-output-type" bind:value={type}>
                 <Select.Trigger>
                   <Select.DisplayValue />
                 </Select.Trigger>

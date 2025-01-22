@@ -14,9 +14,7 @@ export class ColumnModel extends Model<
 > {
   declare id: CreationOptional<string>;
   declare name: string;
-  declare type: "text" | "array" | "number" | "boolean" | "object" | "prompt";
-  declare sortable: boolean;
-  declare output: "text" | "array" | "number" | "boolean" | "object" | null;
+  declare type: string;
 }
 
 ColumnModel.init(
@@ -31,23 +29,8 @@ ColumnModel.init(
       allowNull: false,
     },
     type: {
-      type: DataTypes.ENUM(
-        "text",
-        "array",
-        "number",
-        "boolean",
-        "object",
-        "prompt",
-      ),
+      type: DataTypes.STRING,
       allowNull: false,
-    },
-    sortable: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
-    output: {
-      type: DataTypes.ENUM("text", "array", "number", "boolean", "object"),
-      allowNull: true,
     },
   },
   {

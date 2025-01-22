@@ -4,12 +4,12 @@ import { LuCheck } from "@qwikest/icons/lucide";
 import { TbX } from "@qwikest/icons/tablericons";
 import { Sidebar, Button, Input, Label, Select } from "~/components";
 
-import { type Column } from "~/state";
+import { type CreateColumn, type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 
 interface SidebarProps {
   type: Column["type"];
-  onCreateColumn: QRL<(column: Column) => void>;
+  onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
 export const AddStaticColumnSidebar = component$<SidebarProps>(
@@ -31,15 +31,14 @@ export const AddStaticColumnSidebar = component$<SidebarProps>(
     const onSave = $(() => {
       if (!name.value) return;
 
-      const column: Column = {
+      closeAddStaticColumnSidebar();
+      onCreateColumn({
         name: name.value,
         type: newType.value,
-        sortable: false,
-        output: null,
-      };
-
-      closeAddStaticColumnSidebar();
-      onCreateColumn(column);
+        modelName: "HF MODEL",
+        prompt: "HF PROMPT",
+        rowsGenerated: 10,
+      });
     });
 
     return (

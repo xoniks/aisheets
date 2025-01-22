@@ -5,23 +5,45 @@ import {
   useContext,
   useContextProvider,
 } from "@builder.io/qwik";
-import { routeLoader$, server$ } from "@builder.io/qwik-city";
-import { addColumn, getAllColumns } from "~/services";
+import { routeLoader$ } from "@builder.io/qwik-city";
+import { getAllColumns } from "~/services";
+
+export interface CreateColumn {
+  name: string;
+  type: "text" | "array" | "number" | "boolean" | "object";
+  modelName: string;
+  prompt: string;
+  rowsGenerated: number;
+}
+
+export type Cell = {
+  id: string;
+  idx: number;
+  value: string;
+  error?: string;
+};
 
 export interface Column {
+  id: string;
   name: string;
-  type: "text" | "array" | "number" | "boolean" | "object" | "prompt";
-  sortable: boolean;
-  output: "text" | "array" | "number" | "boolean" | "object" | null;
+  type: "text" | "array" | "number" | "boolean" | "object";
+  process: {
+    modelName: string;
+    prompt: string;
+  };
+  cells: Cell[];
 }
 
 const columnContext = createContextId<Signal<Column[]>>("column.context");
-export const useColumnStateProvider = (columns: Signal<Column[]>) => {
+export const useLoadColumns = () => {
+  const columns = useColumnsLoader();
+
   useContextProvider(columnContext, columns);
+
+  return columns;
 };
 
 export const useColumnsLoader = routeLoader$<Column[]>(() => getAllColumns());
-export const useAddColumnAction = () => server$(addColumn);
 
 export const useColumnsStore = () => {
   const columns = useContext(columnContext);

@@ -1,26 +1,15 @@
-import {
-  $,
-  component$,
-  type QRL,
-  useComputed$,
-  useSignal,
-  useStore,
-  useTask$,
-} from "@builder.io/qwik";
+import { component$, type Signal, useStore, useTask$ } from "@builder.io/qwik";
 import {
   TbAlignJustified,
   TbBraces,
   TbBrackets,
   TbHash,
-  TbSparkles,
   TbToggleLeft,
 } from "@qwikest/icons/tablericons";
-import { Skeleton } from "~/components/ui/skeleton/skeleton";
-import { type Column, type Row } from "~/state";
+import { type Column } from "~/state";
 
 interface Props {
-  columns: Column[];
-  rows: Row[];
+  columns: Signal<Column[]>;
 }
 
 const Icons: Record<Column["type"], any> = {
@@ -29,7 +18,6 @@ const Icons: Record<Column["type"], any> = {
   boolean: TbToggleLeft,
   object: TbBraces,
   array: TbBrackets,
-  prompt: TbSparkles,
 };
 const ColumnIcon = component$<{ type: Column["type"] }>((props) => {
   const Icon = Icons[props.type];
@@ -37,7 +25,7 @@ const ColumnIcon = component$<{ type: Column["type"] }>((props) => {
   return <Icon />;
 });
 
-export const Table = component$<Props>(({ columns, rows }) => {
+export const Table = component$<Props>(({ columns }) => {
   const state = useStore<{
     selectedColumns: Record<string, number[] | undefined>;
     selectedRows: string[];
@@ -51,7 +39,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
   useTask$(({ track }) => {
     track(() => columns);
 
-    state.columnWidths = columns.reduce(
+    state.columnWidths = columns.value.reduce(
       (acc, column) => {
         acc[column.name] = 750;
         return acc;
@@ -60,37 +48,7 @@ export const Table = component$<Props>(({ columns, rows }) => {
     );
   });
 
-  const isAllRowsSelected = useComputed$(
-    () => rows.length === state.selectedRows.length,
-  );
-
-  const toggleSelectAll = $(() => {
-    if (isAllRowsSelected.value) {
-      state.selectedRows = [];
-    } else {
-      state.selectedRows = rows.map((row) => row.id);
-    }
-  });
-
-  const toggleSelectRow = $((row: Row) => {
-    if (state.selectedRows.includes(row.id)) {
-      state.selectedRows = state.selectedRows.filter((id) => id !== row.id);
-    } else {
-      state.selectedRows = [...state.selectedRows, row.id];
-    }
-  });
-
-  const selectColumn = $((row: Row, columnIndex: number) => {
-    state.selectedColumns = {};
-
-    state.selectedColumns[row.id] = [columnIndex];
-  });
-
-  const handleResize = $((columnName: string, newWidth: number) => {
-    state.columnWidths[columnName] = newWidth;
-  });
-
-  if (columns.length === 0) {
+  if (columns.value.length === 0) {
     return (
       <div class="overflow-x-auto">
         <div class="flex items-center justify-center p-4">
@@ -103,142 +61,66 @@ export const Table = component$<Props>(({ columns, rows }) => {
   return (
     <div class="overflow-x-auto">
       <table class="min-w-full bg-white text-sm">
-        <thead>
-          <tr>
-            <th class="max-w-8 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
-              <input
-                type="checkbox"
-                checked={isAllRowsSelected.value}
-                onChange$={toggleSelectAll}
-              />
-            </th>
-            {columns.map((column, index) => (
-              <th
-                key={index}
-                class={`border bg-gray-50  text-left font-light hover:bg-purple-50 ${column.type === "prompt" ? "bg-purple-200" : ""}`}
-                style={{
-                  width: `${state.columnWidths[column.name]}px`,
-                }}
-              >
-                <div class="flex flex-row items-center justify-between">
-                  <div class="flex w-full items-center gap-1 px-2">
-                    <ColumnIcon type={column.type} />
-                    {column.name}
-                  </div>
-                  <div
-                    class="h-8  w-2 cursor-col-resize"
-                    onMouseDown$={(e) => {
-                      const startX = e.clientX;
-                      const startWidth = state.columnWidths[column.name];
-                      const onMouseMove = (moveEvent: MouseEvent) => {
-                        const newWidth =
-                          startWidth + (moveEvent.clientX - startX);
-                        handleResize(column.name, newWidth);
-                      };
-                      const onMouseUp = () => {
-                        document.removeEventListener("mousemove", onMouseMove);
-                        document.removeEventListener("mouseup", onMouseUp);
-                      };
-                      document.addEventListener("mousemove", onMouseMove);
-                      document.addEventListener("mouseup", onMouseUp);
-                    }}
-                  />
-                </div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <RowComponent
-              key={row.id}
-              index={index}
-              row={row}
-              columns={columns}
-              selectedColumns={state.selectedColumns}
-              selectedRows={state.selectedRows}
-              toggleSelectRow={toggleSelectRow}
-              selectColumn={selectColumn}
-            />
-          ))}
-        </tbody>
+        <TableHeader columns={columns.value} />
+        <TableBody columns={columns.value} />
       </table>
     </div>
   );
 });
 
-export const RowComponent = component$<{
-  row: Row;
-  columns: Column[];
-  index: number;
-  selectedRows: string[];
-  selectedColumns: Record<string, number[] | undefined>;
-  toggleSelectRow: QRL<(row: Row) => void>;
-  selectColumn: QRL<(row: Row, columnIndex: number) => void>;
-}>(
-  ({
-    index,
-    row,
-    columns,
-    selectedColumns,
-    selectedRows,
-    toggleSelectRow,
-    selectColumn,
-  }) => {
-    const isSelectedRow = useSignal(false);
-    const hovering = useSignal(isSelectedRow.value);
+const TableHeader = component$<{ columns: Column[] }>(({ columns }) => (
+  <thead>
+    <tr>
+      <th class="max-w-8 border bg-gray-50 px-2 py-2 text-center hover:bg-sky-100">
+        <input type="checkbox" />
+      </th>
 
-    useTask$(({ track }) => {
-      const isSelected = track(() => selectedRows.includes(row.id));
+      {columns.map((column) => (
+        <th
+          key={column.id}
+          class="bg-purple-200 text-left font-light hover:bg-purple-50"
+        >
+          <div class="flex flex-row items-center justify-between">
+            <div class="flex w-full items-center gap-1 px-2">
+              <ColumnIcon type={column.type} />
+              {column.name}
+            </div>
+            <div class="h-8  w-2 cursor-col-resize" />
+          </div>
+        </th>
+      ))}
+    </tr>
+  </thead>
+));
 
-      isSelectedRow.value = isSelected;
-      hovering.value = isSelectedRow.value;
-    });
+const TableBody = component$<{ columns: Column[] }>(({ columns }) => {
+  const rowCount = columns[0]?.cells.length || 0;
 
-    return (
-      <tr
-        class="hover:bg-gray-100"
-        onMouseOver$={() => {
-          hovering.value = true;
-        }}
-        onMouseOut$={() => {
-          hovering.value = isSelectedRow.value || false;
-        }}
-      >
-        <td class="max-w-6 border px-2 py-2 text-center">
-          {hovering.value ? (
-            <input
-              type="checkbox"
-              checked={isSelectedRow.value}
-              onChange$={() => toggleSelectRow(row)}
-            />
-          ) : (
-            <span>{index + 1}</span>
-          )}
-        </td>
-        {columns
-          .filter((c) => Object.keys(row.data).includes(c.name))
-          .map((column, index) => (
-            <td
-              key={index}
-              class={`cursor-pointer text-wrap border px-2 ${selectedColumns[row.id]?.includes(index) ? "border-2 border-blue-300" : ""}
-            ${column.type === "prompt" ? "border-2 border-purple-200" : ""}`}
-              onClick$={() => selectColumn(row, index)}
-            >
-              {row.data[column.name].generating ? (
-                <div class="flex flex-col gap-2">
-                  <Skeleton class="h-6 w-full" />
-                  <Skeleton class="h-3 w-full" />
-                  <Skeleton class="h-3 w-full" />
-                  <Skeleton class="h-3 w-full" />
-                  <Skeleton class="h-3 w-full" />
-                </div>
-              ) : (
-                row.data[column.name].value
-              )}
-            </td>
-          ))}
-      </tr>
-    );
-  },
-);
+  return (
+    <tbody>
+      {Array.from({ length: rowCount }).map((_, rowIndex) => (
+        <tr key={rowIndex} class="hover:bg-gray-100">
+          <td class="max-w-6 border px-2 py-2 text-center">
+            <input type="checkbox" />
+          </td>
+          {columns.map((column) => {
+            const cell = column.cells[rowIndex];
+            return (
+              <td
+                class="cursor-pointer text-wrap border-2 border-purple-200 px-2"
+                key={`${column.id}-${rowIndex}`}
+              >
+                {cell.value}
+                {cell.error && (
+                  <span style={{ color: "red", marginLeft: "8px" }}>
+                    ⚠ {cell.error}
+                  </span>
+                )}
+              </td>
+            );
+          })}
+        </tr>
+      ))}
+    </tbody>
+  );
+});

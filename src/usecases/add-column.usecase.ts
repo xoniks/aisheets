@@ -1,76 +1,78 @@
-import { $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
-import { addColumn, getAllRows, updateRow } from "~/services";
-import { useColumnsStore, useRowsStore, type Column } from "~/state";
+import { addColumn } from "~/services";
+import { addCell } from "~/services/repository/cell";
+import { type CreateColumn, type Column } from "~/state";
 
-//TODO: Put it on background
-const useCreatePromptResponse = () => {
-  return server$(async function* (column: Column) {
-    const rows = await getAllRows();
+interface DynamicData {
+  modelName: string;
+  prompt: string;
+  rows: number;
+}
 
-    const response =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magnaderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+interface DynamicDataResponse {
+  value: string;
+  error?: string;
+}
 
-    for (const row of rows) {
-      row.data[column.name].generating = false;
-
-      for (const letters of response) {
-        row.data[column.name].value += letters;
-
-        yield row;
-
-        await new Promise((resolve) => setTimeout(resolve, 15));
-      }
-
-      updateRow(row);
-    }
-  });
+export const createDynamicData = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  dynamic: DynamicData,
+): Promise<DynamicDataResponse[]> => {
+  return Promise.resolve([
+    {
+      value:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore",
+    },
+    {
+      value:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore",
+    },
+  ]);
 };
 
-export const addColumnUseCaseServer = server$(async (newColum: Column) => {
-  const rows = await getAllRows();
+export const useAddColumnUseCase = () =>
+  server$(async (newColum: CreateColumn): Promise<Column> => {
+    const { name, type, prompt, modelName, rowsGenerated } = newColum;
 
-  addColumn(newColum);
+    const column = await addColumn({
+      name,
+      type,
+    });
 
-  for (const row of rows) {
-    row.data[newColum.name] = {
-      generating: newColum.type === "prompt",
-      value: "",
-    };
+    const cells = [];
 
-    updateRow(row);
-  }
+    const data = await createDynamicData({
+      prompt,
+      modelName,
+      rows: rowsGenerated,
+    });
 
-  return {
-    rows,
-  };
-});
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
 
-export const useAddColumnUseCase = () => {
-  const { updateRow } = useRowsStore();
-  const { addColumn } = useColumnsStore();
-  const streamData = useCreatePromptResponse();
+      const cell = await addCell({
+        columnId: column.id,
+        error: row.error,
+        rowIdx: i,
+        value: row.value,
+      });
 
-  const useUseCase = $(async (newColum: Column) => {
-    const { rows } = await addColumnUseCaseServer(newColum);
-    for (const row of rows) {
-      updateRow(row);
+      cells.push(cell);
     }
 
-    addColumn(newColum);
-
-    const runPromptModel = async () => {
-      if (newColum.type !== "prompt") return;
-
-      const response = await streamData(newColum);
-
-      for await (const value of response) {
-        updateRow(value);
-      }
+    return {
+      id: column.id,
+      name: column.name,
+      type: column.type as Column["type"],
+      cells: cells.map((cell) => ({
+        id: cell.id,
+        idx: cell.rowIdx,
+        value: cell.value,
+        error: cell.error,
+      })),
+      process: {
+        modelName,
+        prompt,
+      },
     };
-
-    runPromptModel();
   });
-
-  return useUseCase;
-};

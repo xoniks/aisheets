@@ -12,20 +12,17 @@ import {
 
 import { Button, Modal } from "~/components";
 
-import { AddStaticColumnSidebar } from "~/features/add-column/add-static-column-sidebar";
-
-import { type Column } from "~/state";
+import { type CreateColumn, type Column } from "~/state";
 import { useModals } from "~/components/hooks/modals/use-modals";
 import { AddDynamicColumnSidebar } from "~/features/add-column/add-dynamic-column-sidebar";
 
 interface Props {
-  onCreateColumn: QRL<(column: Column) => void>;
+  onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
 export const AddColumn = component$<Props>(({ onCreateColumn }) => {
   const { isOpenAddColumnModal, closeAddColumnModal } =
     useModals("addColumnModal");
-  const { openAddStaticColumnSidebar } = useModals("addStaticColumnSidebar");
   const { openAddDynamicColumnSidebar } = useModals("addDynamicColumnSidebar");
 
   const columnType = useSignal<Column["type"]>("text");
@@ -35,9 +32,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
 
     columnType.value = type;
 
-    if (type === "prompt") return openAddDynamicColumnSidebar();
-
-    openAddStaticColumnSidebar();
+    return openAddDynamicColumnSidebar();
   });
 
   return (
@@ -128,7 +123,7 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
               size="md"
               look="ghost"
               class="flex justify-start text-left text-sm hover:bg-blue-300"
-              onClick$={() => openSidebar("prompt")}
+              onClick$={() => openSidebar("array")}
             >
               <span class="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-purple-300">
                 <TbKeyboard />
@@ -158,11 +153,11 @@ export const AddColumn = component$<Props>(({ onCreateColumn }) => {
           </div>
         </div>
       </Modal.Panel>
-
+      {/* 
       <AddStaticColumnSidebar
         type={columnType.value}
         onCreateColumn={onCreateColumn}
-      />
+      /> */}
 
       <AddDynamicColumnSidebar
         type={columnType.value}

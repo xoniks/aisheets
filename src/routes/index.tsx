@@ -5,16 +5,16 @@ import { Table } from "~/components";
 import { AddColumn, Commands } from "~/features";
 import { useHome } from "~/routes/useHome";
 
-export { useRowsLoader, useColumnsLoader } from "~/state";
+export { useColumnsLoader } from "~/state";
 
 export default component$(() => {
-  const { columns, rows, onCreateColumn } = useHome();
+  const { columns, onCreateColumn } = useHome();
 
   return (
     <div class="mx-auto px-4 pt-2">
       <Commands />
 
-      <Table columns={columns.value} rows={rows.value} />
+      <Table columns={columns} />
 
       <AddColumn onCreateColumn={onCreateColumn} />
     </div>
