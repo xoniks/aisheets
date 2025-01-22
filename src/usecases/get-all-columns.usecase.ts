@@ -5,8 +5,8 @@ import {
 } from "~/state";
 
 export const useGetAllColumnsUseCase = () => {
-  const rows = useColumnsLoader();
-  useColumnStateProvider(rows);
+  const columns = useColumnsLoader();
+  useColumnStateProvider(columns);
 
   const { state } = useColumnsStore();
 

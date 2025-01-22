@@ -1,25 +1,29 @@
 import { $ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
 import { addColumn, getAllRows, updateRow } from "~/services";
-import { useColumnsStore, useRowsStore, type Column, type Row } from "~/state";
+import { useColumnsStore, useRowsStore, type Column } from "~/state";
 
 //TODO: Put it on background
-const useStreamServer = () => {
-  return server$(async function* (row: Row, column: Column) {
+const useCreatePromptResponse = () => {
+  return server$(async function* (column: Column) {
+    const rows = await getAllRows();
+
     const response =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magnaderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
-    row.data[column.name].generating = false;
+    for (const row of rows) {
+      row.data[column.name].generating = false;
 
-    for (const letters of response) {
-      row.data[column.name].value += letters;
+      for (const letters of response) {
+        row.data[column.name].value += letters;
 
-      yield row;
+        yield row;
 
-      await new Promise((resolve) => setTimeout(resolve, 15));
+        await new Promise((resolve) => setTimeout(resolve, 15));
+      }
+
+      updateRow(row);
     }
-
-    updateRow(row);
   });
 };
 
@@ -45,7 +49,7 @@ export const addColumnUseCaseServer = server$(async (newColum: Column) => {
 export const useAddColumnUseCase = () => {
   const { updateRow } = useRowsStore();
   const { addColumn } = useColumnsStore();
-  const streamData = useStreamServer();
+  const streamData = useCreatePromptResponse();
 
   const useUseCase = $(async (newColum: Column) => {
     const { rows } = await addColumnUseCaseServer(newColum);
@@ -55,21 +59,17 @@ export const useAddColumnUseCase = () => {
 
     addColumn(newColum);
 
-    if (newColum.type !== "prompt") return;
+    const runPromptModel = async () => {
+      if (newColum.type !== "prompt") return;
 
-    const stream = async (row: Row) => {
-      const response = await streamData(row, newColum);
+      const response = await streamData(newColum);
 
       for await (const value of response) {
         updateRow(value);
       }
     };
 
-    for (const row of rows) {
-      stream(row);
-
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
+    runPromptModel();
   });
 
   return useUseCase;
