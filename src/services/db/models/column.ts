@@ -1,22 +1,22 @@
-import { isDev } from "@builder.io/qwik";
+import { isDev } from '@builder.io/qwik';
 import type {
   Association,
   HasManyCreateAssociationMixin,
   NonAttribute,
-} from "sequelize";
+} from 'sequelize';
 import {
   type CreationOptional,
   DataTypes,
   type InferAttributes,
   type InferCreationAttributes,
   Model,
-} from "sequelize";
+} from 'sequelize';
 
-import { db } from "~/services/db";
-import { ColumnCellModel } from "~/services/db/models/cell";
-import { ProcessModel } from "~/services/db/models/process";
+import { db } from '~/services/db';
+import { ColumnCellModel } from '~/services/db/models/cell';
+import { ProcessModel } from '~/services/db/models/process';
 //Review the path
-import { type Cell, type ColumnKind, type ColumnType } from "~/state";
+import type { Cell, ColumnKind, ColumnType } from '~/state';
 
 export class ColumnModel extends Model<
   InferAttributes<ColumnModel>,
@@ -32,7 +32,7 @@ export class ColumnModel extends Model<
 
   declare createCell: HasManyCreateAssociationMixin<
     ColumnCellModel,
-    "columnId"
+    'columnId'
   >;
 
   declare static associations: {
@@ -66,18 +66,18 @@ ColumnModel.init(
   },
   {
     sequelize: db,
-    modelName: "Column",
+    modelName: 'Column',
   },
 );
 
 ColumnModel.hasMany(ColumnCellModel, {
-  sourceKey: "id",
-  foreignKey: "columnId",
-  as: "cells",
+  sourceKey: 'id',
+  foreignKey: 'columnId',
+  as: 'cells',
 });
 
 ColumnModel.hasOne(ProcessModel, {
-  sourceKey: "id",
+  sourceKey: 'id',
 });
 
 await ColumnModel.sync({ alter: isDev });

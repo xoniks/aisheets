@@ -1,4 +1,4 @@
-import { isDev } from "@builder.io/qwik";
+import { isDev } from '@builder.io/qwik';
 import {
   type Association,
   type CreationOptional,
@@ -7,12 +7,12 @@ import {
   type InferCreationAttributes,
   Model,
   type NonAttribute,
-} from "sequelize";
+} from 'sequelize';
 
-import { db } from "~/services/db";
-import { ColumnModel } from "~/services/db/models/column";
+import { db } from '~/services/db';
+import { ColumnModel } from '~/services/db/models/column';
 //Review the path
-import { type Column } from "~/state";
+import type { Column } from '~/state';
 
 export class DatasetModel extends Model<
   InferAttributes<DatasetModel>,
@@ -44,14 +44,14 @@ DatasetModel.init(
   },
   {
     sequelize: db,
-    modelName: "Dataset",
+    modelName: 'Dataset',
   },
 );
 
 DatasetModel.hasMany(ColumnModel, {
-  sourceKey: "id",
-  foreignKey: "datasetId",
-  as: "columns",
+  sourceKey: 'id',
+  foreignKey: 'datasetId',
+  as: 'columns',
 });
 
 await DatasetModel.sync({ alter: isDev });

@@ -4,7 +4,7 @@ import { createDOM } from '@builder.io/qwik/testing';
 import { expect, test, vi } from 'vitest';
 import { ModalsProvider } from '~/components';
 import { AddDynamicColumnSidebar } from '~/features/add-column/add-dynamic-column-sidebar';
-import { CreateColumn } from '~/state';
+import type { CreateColumn } from '~/state';
 import { useAddColumnUseCase } from '~/usecases/add-column.usecase';
 
 const fn = vi.fn();
@@ -19,13 +19,13 @@ test('should AddDynamicColumnSidebar does not call onCreateColumn initially', as
       <QwikCityMockProvider>
         <AddDynamicColumnSidebar onCreateColumn={onCreateColumn} />
       </QwikCityMockProvider>
-    </ModalsProvider>
+    </ModalsProvider>,
   );
 
   expect(fn).not.toHaveBeenCalled();
 });
 
-test("should save 10 cells", async ()=> {
+test('should save 10 cells', async () => {
   const add = useAddColumnUseCase();
 
   const newColumn: CreateColumn = {
@@ -40,13 +40,13 @@ test("should save 10 cells", async ()=> {
     },
   };
 
-  const columnAdded = await add(newColumn)
+  const columnAdded = await add(newColumn);
 
   expect(columnAdded).toContain({
     id: columnAdded.id,
     name: 'name',
     type: 'text',
-    kind: 'dynamic'
-  })
-  expect(columnAdded.cells).toHaveLength(10)
-})
+    kind: 'dynamic',
+  });
+  expect(columnAdded.cells).toHaveLength(10);
+});

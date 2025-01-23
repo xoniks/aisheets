@@ -1,8 +1,8 @@
-import { component$ } from "@builder.io/qwik";
-import { TbPlus } from "@qwikest/icons/tablericons";
+import { component$ } from '@builder.io/qwik';
+import { TbPlus } from '@qwikest/icons/tablericons';
 
-import { Breadcrumb } from "~/components/ui/breadcrumb/breadcrumb";
-import { Button } from "~/components/ui/button/button";
+import { Breadcrumb } from '~/components/ui/breadcrumb/breadcrumb';
+import { Button } from '~/components/ui/button/button';
 
 export const NavBar = component$(() => {
   return (

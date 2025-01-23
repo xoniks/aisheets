@@ -4,13 +4,13 @@ import {
   type Signal,
   useContext,
   useContextProvider,
-} from "@builder.io/qwik";
-import { routeLoader$ } from "@builder.io/qwik-city";
+} from '@builder.io/qwik';
+import { routeLoader$ } from '@builder.io/qwik-city';
 
-import { getAllColumns } from "~/services";
+import { getAllColumns } from '~/services';
 
-export type ColumnType = "text" | "array" | "number" | "boolean" | "object";
-export type ColumnKind = "static" | "dynamic";
+export type ColumnType = 'text' | 'array' | 'number' | 'boolean' | 'object';
+export type ColumnKind = 'static' | 'dynamic';
 
 export interface Process {
   modelName: string;
@@ -42,7 +42,7 @@ export interface Column {
   cells: Cell[];
 }
 
-const columnContext = createContextId<Signal<Column[]>>("column.context");
+const columnContext = createContextId<Signal<Column[]>>('column.context');
 export const useLoadColumns = () => {
   const columns = useColumnsLoader();
 

@@ -4,10 +4,10 @@ import {
   Slot,
   useContextProvider,
   useSignal,
-} from "@builder.io/qwik";
+} from '@builder.io/qwik';
 
-import { type Modals } from "~/components/hooks/modals/config";
-import { initialState, modalsContext } from "~/components/hooks/modals/context";
+import type { Modals } from '~/components/hooks/modals/config';
+import { initialState, modalsContext } from '~/components/hooks/modals/context';
 
 const useModalsProvider = (modals: Signal<Modals>) => {
   useContextProvider(modalsContext, modals);

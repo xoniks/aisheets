@@ -1,6 +1,6 @@
-import { ColumnModel } from "~/services/db/models/column";
-import { ProcessModel } from "~/services/db/models/process";
-import type { Cell, Column, Process } from "~/state";
+import { ColumnModel } from '~/services/db/models/column';
+import { ProcessModel } from '~/services/db/models/process';
+import type { Cell, Column, Process } from '~/state';
 
 export const getAllColumns = async (): Promise<Column[]> => {
   const columns = await ColumnModel.findAll({
@@ -22,7 +22,7 @@ export const getAllColumns = async (): Promise<Column[]> => {
 };
 
 export const addColumn = async (
-  column: Omit<Column, "id" | "cells">,
+  column: Omit<Column, 'id' | 'cells'>,
   process?: Process,
 ) => {
   const cells: Cell[] = [];
@@ -40,11 +40,11 @@ export const addColumn = async (
   }
 
   const handler = {
-    addCell: async (cell: Omit<Cell, "id">) => {
+    addCell: async (cell: Omit<Cell, 'id'>) => {
       const newbie = await addedColumn.createCell({
         idx: cell.idx,
-        value: cell.value ?? "",
-        error: cell.error ?? "",
+        value: cell.value ?? '',
+        error: cell.error ?? '',
       });
 
       cells.push(newbie);

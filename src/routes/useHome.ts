@@ -1,7 +1,7 @@
-import { $ } from "@builder.io/qwik";
+import { $ } from '@builder.io/qwik';
 
-import { type CreateColumn, useColumnsStore, useLoadColumns } from "~/state";
-import { useAddColumnUseCase } from "~/usecases/add-column.usecase";
+import { type CreateColumn, useColumnsStore, useLoadColumns } from '~/state';
+import { useAddColumnUseCase } from '~/usecases/add-column.usecase';
 
 export const useHome = () => {
   const columns = useLoadColumns();

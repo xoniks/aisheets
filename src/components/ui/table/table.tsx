@@ -1,20 +1,20 @@
-import { component$, type Signal, useStore, useTask$ } from "@builder.io/qwik";
+import { component$, type Signal, useStore, useTask$ } from '@builder.io/qwik';
 import {
   TbAlignJustified,
   TbBraces,
   TbBrackets,
+  TbToggleLeft,
   TbHash,
   TbSparkles,
-  TbToggleLeft,
-} from "@qwikest/icons/tablericons";
+} from '@qwikest/icons/tablericons';
 
-import { type Column, type ColumnKind, type ColumnType } from "~/state";
+import type { Column, ColumnKind, ColumnType } from '~/state';
 
 interface Props {
   columns: Signal<Column[]>;
 }
 
-const Icons: Record<Column["type"], any> = {
+const Icons: Record<Column['type'], any> = {
   text: TbAlignJustified,
   number: TbHash,
   boolean: TbToggleLeft,
@@ -23,7 +23,7 @@ const Icons: Record<Column["type"], any> = {
 };
 const ColumnIcon = component$<{ type: ColumnType; kind: ColumnKind }>(
   ({ type, kind }) => {
-    if (kind === "dynamic") return <TbSparkles />;
+    if (kind === 'dynamic') return <TbSparkles />;
 
     const Icon = Icons[type];
 
@@ -118,7 +118,7 @@ const TableBody = component$<{ columns: Column[] }>(({ columns }) => {
               >
                 {cell.value}
                 {cell.error && (
-                  <span style={{ color: "red", marginLeft: "8px" }}>
+                  <span style={{ color: 'red', marginLeft: '8px' }}>
                     ⚠ {cell.error}
                   </span>
                 )}

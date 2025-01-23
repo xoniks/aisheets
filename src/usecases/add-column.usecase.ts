@@ -1,7 +1,7 @@
-import { server$ } from "@builder.io/qwik-city";
+import { server$ } from '@builder.io/qwik-city';
 
-import { addColumn } from "~/services";
-import { type Column, type CreateColumn } from "~/state";
+import { addColumn } from '~/services';
+import type { Column, CreateColumn } from '~/state';
 
 interface DynamicData {
   modelName: string;
@@ -16,17 +16,16 @@ interface DynamicDataResponse {
 }
 
 export const createDynamicData = async (
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  dynamic: DynamicData,
+  _dynamic: DynamicData,
 ): Promise<DynamicDataResponse[]> => {
   return Promise.resolve([
     {
       value:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore",
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore',
     },
     {
       value:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore",
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore',
     },
   ]);
 };
@@ -44,7 +43,7 @@ export const useAddColumnUseCase = () =>
       process,
     );
 
-    if (kind === "dynamic") {
+    if (kind === 'dynamic') {
       const { limit, modelName, offset, prompt } = process!;
 
       const data = await createDynamicData({
@@ -84,5 +83,5 @@ export const useAddColumnUseCase = () =>
       };
     }
 
-    throw new Error("Not implemented static column creation");
+    throw new Error('Not implemented static column creation');
   });

@@ -9,11 +9,11 @@
  * - More code is transferred to the browser than in SSR mode.
  * - Optimizer/Serialization/Deserialization code is not exercised!
  */
-import { render, type RenderOptions } from "@builder.io/qwik";
+import { render, type RenderOptions } from '@builder.io/qwik';
 
-import { db } from "~/services/db";
+import { db } from '~/services/db';
 
-import Root from "./root";
+import Root from './root';
 
 export default async function (opts: RenderOptions) {
   await db.sync({ force: true });

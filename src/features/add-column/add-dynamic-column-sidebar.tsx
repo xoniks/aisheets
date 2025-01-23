@@ -1,33 +1,33 @@
-import { $, component$, type QRL, useSignal, useTask$ } from "@builder.io/qwik";
-import { LuCheck } from "@qwikest/icons/lucide";
-import { TbX } from "@qwikest/icons/tablericons";
+import { $, component$, type QRL, useSignal, useTask$ } from '@builder.io/qwik';
+import { LuCheck } from '@qwikest/icons/lucide';
+import { TbX } from '@qwikest/icons/tablericons';
 
-import { Button, Input, Label, Select, Sidebar, Textarea } from "~/components";
-import { useModals } from "~/components/hooks/modals/use-modals";
-import { type ColumnType, type CreateColumn } from "~/state";
+import { Button, Input, Label, Select, Sidebar, Textarea } from '~/components';
+import { useModals } from '~/components/hooks/modals/use-modals';
+import type { ColumnType, CreateColumn } from '~/state';
 
 interface SidebarProps {
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
 }
 
-const outputType = ["text", "array", "number", "boolean", "object"];
+const outputType = ['text', 'array', 'number', 'boolean', 'object'];
 export const AddDynamicColumnSidebar = component$<SidebarProps>(
   ({ onCreateColumn }) => {
     const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
-      useModals("addDynamicColumnSidebar");
+      useModals('addDynamicColumnSidebar');
 
-    const type = useSignal<NonNullable<ColumnType>>("text");
-    const name = useSignal("");
-    const rowsToGenerate = useSignal("10");
-    const prompt = useSignal("");
+    const type = useSignal<NonNullable<ColumnType>>('text');
+    const name = useSignal('');
+    const rowsToGenerate = useSignal('10');
+    const prompt = useSignal('');
 
     useTask$(({ track }) => {
       track(isOpenAddDynamicColumnSidebar);
 
-      type.value = "text";
-      name.value = "";
-      prompt.value = "";
-      rowsToGenerate.value = "10";
+      type.value = 'text';
+      name.value = '';
+      prompt.value = '';
+      rowsToGenerate.value = '10';
     });
 
     const onCreate = $(() => {
@@ -36,9 +36,9 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
       const column: CreateColumn = {
         name: name.value,
         type: type.value,
-        kind: "dynamic",
+        kind: 'dynamic',
         process: {
-          modelName: "HF Model",
+          modelName: 'HF Model',
           prompt: prompt.value,
           offset: 0,
           limit: Number(rowsToGenerate.value),
