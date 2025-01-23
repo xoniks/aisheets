@@ -26,8 +26,6 @@ export const onGet = async ({
 
   const sessionCode = crypto.randomUUID();
 
-  const isAuthorized = false;
-
   const authData = {
     state: sessionCode,
     clientId: CLIENT_ID,
@@ -38,24 +36,22 @@ export const onGet = async ({
     },
   };
 
-  if (!isAuthorized) {
-    const url = await hub.oauthLoginUrl(authData);
+  const loginUrl = await hub.oauthLoginUrl(authData);
 
-    cookie.set(
-      sessionCode,
-      {
-        codeVerifier: authData.localStorage.codeVerifier!,
-        nonce: authData.localStorage.nonce!,
-      },
-      {
-        secure: true,
-        httpOnly: true,
-        path: '/auth/callback',
-      },
-    );
+  cookie.set(
+    sessionCode,
+    {
+      codeVerifier: authData.localStorage.codeVerifier!,
+      nonce: authData.localStorage.nonce!,
+    },
+    {
+      secure: true,
+      httpOnly: true,
+      path: '/auth/callback',
+    },
+  );
 
-    throw redirect(303, url);
-  }
+  throw redirect(303, loginUrl);
 };
 
 export default component$(() => {

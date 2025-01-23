@@ -40,7 +40,6 @@ export const onGet = async ({
       redirectedUrl: url.href,
     });
 
-    console.log(sessionCode);
     cookie.delete('session');
 
     cookie.set('session', token, {
