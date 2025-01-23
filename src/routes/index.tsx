@@ -6,22 +6,21 @@ import { Table } from '~/components';
 import { useHome } from '~/routes/useHome';
 
 import * as hub from '@huggingface/hub';
+import { useSession } from '~/state/session';
 
-export { useColumnsLoader } from '~/state';
+export { useColumnsLoader, useSession } from '~/state';
 
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
 
 export const onGet = async ({
   cookie,
+  sharedMap,
   redirect,
   next,
-  sharedMap,
   url,
 }: RequestEvent) => {
-  const session = cookie.get('session');
+  const session = sharedMap.get('session');
   if (session) {
-    sharedMap.set('session', session);
-
     return next();
   }
 
@@ -60,10 +59,12 @@ export const onGet = async ({
 };
 
 export default component$(() => {
+  const session = useSession();
   const { columns, onCreateColumn } = useHome();
 
   return (
     <div class="mx-auto px-4 pt-2">
+      <h2>Hello {session.value.user.name} 👋</h2>
       <Commands />
 
       <Table columns={columns} />
