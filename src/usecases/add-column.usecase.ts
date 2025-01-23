@@ -44,14 +44,7 @@ export const useAddColumnUseCase = () =>
     );
 
     if (kind === 'dynamic') {
-      const { limit, modelName, offset, prompt } = process!;
-
-      const data = await createDynamicData({
-        prompt,
-        modelName,
-        limit,
-        offset,
-      });
+      const data = await createDynamicData(process!);
 
       await Promise.all(
         data.map((cell, idx) =>
@@ -62,26 +55,35 @@ export const useAddColumnUseCase = () =>
           }),
         ),
       );
-
-      return {
-        id: column.id,
-        name: column.name,
-        type: column.type,
-        kind: column.kind,
-        cells: column.cells.map((cell) => ({
-          id: cell.id,
-          idx: cell.idx,
-          value: cell.value,
-          error: cell.error,
-        })),
-        process: {
-          modelName,
-          prompt,
-          offset,
-          limit,
-        },
-      };
+    } else {
+      // Iterate based on quantity of rows.
+      for (let idx = 0; idx < 2; idx++) {
+        await column.addCell({
+          idx,
+          value: '',
+          error: '',
+        });
+      }
     }
 
-    throw new Error('Not implemented static column creation');
+    return {
+      id: column.id,
+      name: column.name,
+      type: column.type,
+      kind: column.kind,
+      cells: column.cells.map((cell) => ({
+        id: cell.id,
+        idx: cell.idx,
+        value: cell.value,
+        error: cell.error,
+      })),
+      process: column.process
+        ? {
+            modelName: column.process.modelName,
+            prompt: column.process.prompt,
+            limit: column.process.limit,
+            offset: column.process.offset,
+          }
+        : undefined,
+    };
   });

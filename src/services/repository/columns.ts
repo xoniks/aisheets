@@ -54,6 +54,7 @@ export const addColumn = async (
     type: addedColumn.type,
     kind: addedColumn.kind,
     cells,
+    process,
   };
 
   return handler;
