@@ -1,10 +1,21 @@
-import { $, component$, type QRL, useSignal, useTask$ } from '@builder.io/qwik';
+import {
+  $,
+  type QRL,
+  component$,
+  useSignal,
+  useTask$,
+  useVisibleTask$,
+} from '@builder.io/qwik';
 import { LuCheck } from '@qwikest/icons/lucide';
 import { TbX } from '@qwikest/icons/tablericons';
 
 import { Button, Input, Label, Select, Sidebar, Textarea } from '~/components';
 import { useModals } from '~/components/hooks/modals/use-modals';
-import type { ColumnType, CreateColumn } from '~/state';
+import {
+  TemplateTextArea,
+  type Variable,
+} from '~/features/add-column/components/template-textarea';
+import { type ColumnType, type CreateColumn, useColumnsStore } from '~/state';
 
 interface SidebarProps {
   onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
@@ -15,14 +26,21 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
   ({ onCreateColumn }) => {
     const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
       useModals('addDynamicColumnSidebar');
+    const { state: columns } = useColumnsStore();
 
     const type = useSignal<NonNullable<ColumnType>>('text');
     const name = useSignal('');
     const rowsToGenerate = useSignal('3');
     const prompt = useSignal('');
+    const variables = useSignal<Variable[]>([]);
+    const columnsReferences = useSignal<string[]>([]);
+
+    const onSelectedVariables = $((variables: { id: string }[]) => {
+      columnsReferences.value = variables.map((v) => v.id);
+    });
     const modelName = useSignal('meta-llama/Llama-2-7b-chat-hf');
 
-    useTask$(({ track }) => {
+    useVisibleTask$(({ track }) => {
       track(isOpenAddDynamicColumnSidebar);
 
       type.value = 'text';
@@ -30,6 +48,12 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
       prompt.value = '';
       modelName.value = 'meta-llama/Llama-2-7b-chat-hf';
       rowsToGenerate.value = '3';
+      columnsReferences.value = [];
+
+      variables.value = columns.value.map((c) => ({
+        id: c.id,
+        name: c.name,
+      }));
     });
 
     const onCreate = $(() => {
@@ -42,6 +66,7 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
         executionProcess: {
           modelName: modelName.value,
           prompt: prompt.value,
+          columnsReferences: columnsReferences.value,
           offset: 0,
           limit: Number(rowsToGenerate.value),
         },
@@ -92,10 +117,14 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
               </Select.Root>
 
               <Label for="column-prompt">Prompt template</Label>
-              <Textarea id="column-prompt" bind:value={prompt} />
+              <TemplateTextArea
+                bind:value={prompt}
+                variables={variables}
+                onSelectedVariables={onSelectedVariables}
+              />
 
-              <Label for="column-model">
-                Model name. Available models in the{' '}
+              <Label for="column-model" class="flex gap-1">
+                Model name. Available models in the
                 <a
                   href="https://huggingface.co/playground"
                   target="_blank"
