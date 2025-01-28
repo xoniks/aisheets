@@ -1,23 +1,23 @@
-import { routeLoader$ } from '@builder.io/qwik-city';
+import { isBrowser } from '@builder.io/qwik';
+import type { RequestEventBase } from '@builder.io/qwik-city';
 
 interface Session {
   token: string;
   user: {
     name: string;
-    email: string;
     picture: string;
   };
 }
 
-export const useSession = routeLoader$(({ sharedMap }): Session => {
+export const useServerSession = ({ sharedMap }: RequestEventBase): Session => {
+  if (isBrowser)
+    throw new Error('useServerSession must be used on the server.');
+
   const session = sharedMap.get('session')!;
 
-  return {
-    token: session.accessToken,
-    user: {
-      name: session.userInfo.name,
-      email: session.userInfo.email,
-      picture: session.userInfo.picture,
-    },
-  };
-});
+  if (!session) {
+    throw new Error('session is undefined');
+  }
+
+  return session;
+};

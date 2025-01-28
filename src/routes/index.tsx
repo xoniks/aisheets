@@ -1,14 +1,18 @@
-import { component$ } from '@builder.io/qwik';
-import type { DocumentHead, RequestEvent } from '@builder.io/qwik-city';
+import { component$, isDev } from '@builder.io/qwik';
+import {
+  type DocumentHead,
+  type RequestEvent,
+  routeLoader$,
+} from '@builder.io/qwik-city';
 import { AddColumn, Commands } from '~/features';
 
 import { Table } from '~/components';
 import { useHome } from '~/routes/useHome';
 
 import * as hub from '@huggingface/hub';
-import { useSession } from '~/state/session';
+import { useServerSession } from '~/state/session';
 
-export { useColumnsLoader, useSession } from '~/state';
+export { useColumnsLoader } from '~/state';
 
 // See https://huggingface.co/docs/hub/en/spaces-oauth
 const HF_TOKEN = process.env.HF_TOKEN;
@@ -49,7 +53,7 @@ export const onGet = async ({
       },
       {
         secure: true,
-        httpOnly: true,
+        httpOnly: !isDev,
         path: '/auth/callback',
       },
     );
@@ -57,21 +61,25 @@ export const onGet = async ({
   }
 
   if (HF_TOKEN) {
-    const userInfo = await hub.whoAmI({ accessToken: HF_TOKEN });
-    const auth = {
-      accessToken: HF_TOKEN,
-      userInfo,
+    const userInfo = (await hub.whoAmI({ accessToken: HF_TOKEN })) as any;
+
+    const session = {
+      token: HF_TOKEN,
+      user: {
+        name: userInfo.name,
+        picture: userInfo.avatarUrl,
+      },
     };
 
     cookie.delete('session');
 
-    cookie.set('session', auth, {
+    cookie.set('session', session, {
       secure: true,
-      httpOnly: true,
+      httpOnly: !isDev,
       path: '/',
     });
 
-    sharedMap.set('session', auth);
+    sharedMap.set('session', session);
 
     return next();
   }
@@ -79,13 +87,15 @@ export const onGet = async ({
   throw Error('Missing HF_TOKEN or OAUTH_CLIENT_ID');
 };
 
+export const useSession = routeLoader$(useServerSession);
+
 export default component$(() => {
   const session = useSession();
   const { columns, onCreateColumn } = useHome();
 
   return (
     <div class="mx-auto px-4 pt-2">
-      <h2>Hello {session.value.user.name} 👋</h2>
+      <h2>Hello {session.value.user.name} 👋</h2>
       <Commands />
 
       <Table columns={columns} />
