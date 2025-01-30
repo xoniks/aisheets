@@ -12,13 +12,14 @@ export const useAddColumnUseCase = () =>
   ) {
     const session = useServerSession(this);
 
-    const { name, type, kind, process } = newColum;
+    const { name, type, kind, dataset, process } = newColum;
 
     const column = await addColumn(
       {
         name,
         type,
         kind,
+        dataset,
       },
       process,
     );
@@ -30,6 +31,7 @@ export const useAddColumnUseCase = () =>
         type: column.type,
         kind: column.kind,
         cells: [],
+        dataset: column.dataset,
         process: column.process,
       },
     };

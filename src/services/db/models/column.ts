@@ -1,6 +1,7 @@
 import { isDev } from '@builder.io/qwik';
 import type {
   Association,
+  ForeignKey,
   HasManyCreateAssociationMixin,
   NonAttribute,
 } from 'sequelize';
@@ -14,6 +15,7 @@ import {
 
 import { db } from '~/services/db';
 import { ColumnCellModel } from '~/services/db/models/cell';
+import type { DatasetModel } from '~/services/db/models/dataset';
 import { ProcessModel } from '~/services/db/models/process';
 
 export class ColumnModel extends Model<
@@ -25,6 +27,9 @@ export class ColumnModel extends Model<
   declare type: string;
   declare kind: string;
 
+  declare datasetId: ForeignKey<DatasetModel['id']>;
+
+  declare dataset: NonAttribute<DatasetModel>;
   declare process: NonAttribute<ProcessModel>;
   declare cells: NonAttribute<ColumnCellModel[]>;
 
@@ -35,6 +40,7 @@ export class ColumnModel extends Model<
 
   declare static associations: {
     cells: Association<ColumnModel, ColumnCellModel>;
+    dataset: Association<ColumnModel, DatasetModel>;
     process: Association<ColumnModel, ProcessModel>;
   };
 }
@@ -57,6 +63,10 @@ ColumnModel.init(
     },
     kind: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    datasetId: {
+      type: DataTypes.UUID,
       allowNull: false,
     },
   },

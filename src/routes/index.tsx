@@ -9,14 +9,12 @@ import { AddColumnModal, Commands } from '~/features';
 import { Table } from '~/components';
 
 import * as hub from '@huggingface/hub';
-import { useInitializeColumnsStore } from '~/state';
+
 import { useServerSession } from '~/state/session';
 
-export { useColumnsLoader } from '~/state';
+import { useDatasetsStore, useLoadDatasets } from '~/state';
 
-// See https://huggingface.co/docs/hub/en/spaces-oauth
-const HF_TOKEN = process.env.HF_TOKEN;
-const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+export { useDatasetsLoader } from '~/state';
 
 export const onGet = async ({
   cookie,
@@ -25,6 +23,10 @@ export const onGet = async ({
   next,
   url,
 }: RequestEvent) => {
+  // See https://huggingface.co/docs/hub/en/spaces-oauth
+  const HF_TOKEN = process.env.HF_TOKEN;
+  const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
+
   const session = sharedMap.get('session');
   if (session) {
     return next();
@@ -91,13 +93,17 @@ export const onGet = async ({
 export const useSession = routeLoader$(useServerSession);
 
 export default component$(() => {
-  const session = useSession();
+  useLoadDatasets();
 
-  useInitializeColumnsStore();
+  const session = useSession();
+  const { activeDataset } = useDatasetsStore();
 
   return (
     <div class="mx-auto px-4 pt-2">
       <h2>Hello {session.value.user.name} 👋</h2>
+      <h3>
+        You are creating the dataset <strong>{activeDataset.value.name}</strong>
+      </h3>
       <Commands />
 
       <Table />

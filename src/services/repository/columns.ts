@@ -2,8 +2,11 @@ import { ColumnModel, ProcessColumnModel } from '~/services/db/models/column';
 import { ProcessModel } from '~/services/db/models/process';
 import type { Cell, Column, ColumnKind, ColumnType, Process } from '~/state';
 
-export const getAllColumns = async (): Promise<Column[]> => {
+export const getAllColumns = async (datasetId: string): Promise<Column[]> => {
   const columns = await ColumnModel.findAll({
+    where: {
+      datasetId,
+    },
     include: [
       {
         association: ColumnModel.associations.cells,
@@ -14,6 +17,9 @@ export const getAllColumns = async (): Promise<Column[]> => {
         association: ColumnModel.associations.process,
         include: [ProcessModel.associations.referredColumns],
       },
+      {
+        association: ColumnModel.associations.dataset,
+      },
     ],
     order: [['createdAt', 'ASC']],
   });
@@ -23,6 +29,13 @@ export const getAllColumns = async (): Promise<Column[]> => {
     name: column.name,
     type: column.type as ColumnType,
     kind: column.kind as ColumnKind,
+
+    dataset: {
+      id: column.dataset.id,
+      name: column.dataset.name,
+      createdBy: column.dataset.createdBy,
+    },
+
     cells: column.cells.map((cell) => ({
       id: cell.id,
       idx: cell.idx,
@@ -32,6 +45,7 @@ export const getAllColumns = async (): Promise<Column[]> => {
       columnId: cell.columnId,
       updatedAt: cell.updatedAt,
     })),
+
     process: {
       columnsReferences: (column.process?.referredColumns ?? []).map(
         (column) => column.id,
@@ -56,6 +70,9 @@ export const getColumnById = async (id: string): Promise<Column | null> => {
         association: ColumnModel.associations.process,
         include: [ProcessModel.associations.referredColumns],
       },
+      {
+        association: ColumnModel.associations.dataset,
+      },
     ],
   });
 
@@ -66,6 +83,13 @@ export const getColumnById = async (id: string): Promise<Column | null> => {
     name: column.name,
     type: column.type as ColumnType,
     kind: column.kind as ColumnKind,
+
+    dataset: {
+      id: column.dataset.id,
+      name: column.dataset.name,
+      createdBy: column.dataset.createdBy,
+    },
+
     cells: column.cells.map((cell) => ({
       id: cell.id,
       idx: cell.idx,
@@ -75,6 +99,7 @@ export const getColumnById = async (id: string): Promise<Column | null> => {
       columnId: cell.columnId,
       updatedAt: cell.updatedAt,
     })),
+
     process: {
       id: column.process?.id,
       columnsReferences: (column.process?.referredColumns ?? []).map(
@@ -98,6 +123,7 @@ export const addColumn = async (
     name: column.name,
     type: column.type,
     kind: column.kind,
+    datasetId: column.dataset.id,
   });
 
   if (process) {
@@ -150,6 +176,7 @@ export const addColumn = async (
     name: addedColumn.name,
     type: addedColumn.type as ColumnType,
     kind: addedColumn.kind as ColumnKind,
+    dataset: column.dataset,
     cells,
     process: {
       id: addedColumn.process?.id,
