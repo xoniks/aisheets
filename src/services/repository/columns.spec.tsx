@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ColumnModel, ProcessColumnModel } from '../db/models/column';
 import { ProcessModel } from '../db/models/process';
 
-import { DatasetModel } from '../db/models/dataset';
-import { addColumn } from './columns';
+import { DatasetModel } from '../db/models';
+import { createColumn } from './columns';
 
 afterEach(async () => {
   await DatasetModel.destroy({ where: {} });
@@ -17,24 +17,23 @@ describe('addColumn', () => {
       name: 'dataset',
       createdBy: 'test',
     });
-    const newColumn = await addColumn(
-      {
-        name: 'Column 1',
-        type: 'text',
-        kind: 'static',
-        dataset: {
-          id: dataset.id,
-          name: dataset.name,
-          createdBy: dataset.createdBy,
-        },
-      },
-      {
+
+    const newColumn = await createColumn({
+      name: 'Column 1',
+      type: 'text',
+      kind: 'static',
+      process: {
         modelName: 'model',
         prompt: 'test prompt',
         offset: 0,
         limit: 10,
       },
-    );
+      dataset: {
+        id: dataset.id,
+        name: dataset.name,
+        createdBy: dataset.createdBy,
+      },
+    });
 
     expect(await ColumnModel.count()).toBe(1);
     expect(await ProcessModel.count()).toBe(1);
@@ -61,25 +60,23 @@ describe('addColumn', () => {
       },
     ]);
 
-    const newColumn = await addColumn(
-      {
-        name: 'Column 1',
-        type: 'text',
-        kind: 'static',
-        dataset: {
-          id: dataset.id,
-          name: dataset.name,
-          createdBy: dataset.createdBy,
-        },
-      },
-      {
+    const newColumn = await createColumn({
+      name: 'Column 1',
+      type: 'text',
+      kind: 'static',
+      process: {
         modelName: 'model',
         prompt: 'test prompt',
         offset: 0,
         limit: 10,
         columnsReferences: columns.map((c) => c.id),
       },
-    );
+      dataset: {
+        id: dataset.id,
+        name: dataset.name,
+        createdBy: dataset.createdBy,
+      },
+    });
 
     expect(await ColumnModel.count()).toBe(3);
     expect(await ProcessModel.count()).toBe(1);
