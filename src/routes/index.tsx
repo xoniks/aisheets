@@ -4,15 +4,13 @@ import {
   type RequestEvent,
   routeLoader$,
 } from '@builder.io/qwik-city';
-import { AddColumnModal, Commands } from '~/features';
-
 import { Table } from '~/components';
+import { Commands } from '~/features';
 
 import * as hub from '@huggingface/hub';
 
+import { useLoadDatasets } from '~/state';
 import { useServerSession } from '~/state/session';
-
-import { useDatasetsStore, useLoadDatasets } from '~/state';
 
 export { useDatasetsLoader } from '~/state';
 
@@ -100,20 +98,14 @@ export const useSession = routeLoader$(useServerSession);
 export default component$(() => {
   useLoadDatasets();
 
-  const session = useSession();
-  const { activeDataset } = useDatasetsStore();
-
   return (
-    <div class="mx-auto px-4 pt-2">
-      <h2>Hello {session.value.user.name} 👋</h2>
-      <h3>
-        You are creating the dataset <strong>{activeDataset.value.name}</strong>
-      </h3>
-      <Commands />
-
-      <Table />
-
-      <AddColumnModal />
+    <div class="min-h-screen bg-gray-50/50">
+      <div class="mx-auto max-w-[1200px] px-6 py-4">
+        <Commands />
+        <div class="mt-3">
+          <Table />
+        </div>
+      </div>
     </div>
   );
 });
