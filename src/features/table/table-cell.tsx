@@ -20,7 +20,6 @@ export const TableCell = component$<{ cell: Cell }>(({ cell }) => {
   const editCellValueInput = useSignal<HTMLElement>();
   const contentRef = useSignal<HTMLElement>();
   const isTruncated = useSignal(false);
-
   const validateCell = useValidateCellUseCase();
 
   useTask$(({ track }) => {
@@ -116,7 +115,9 @@ export const TableCell = component$<{ cell: Cell }>(({ cell }) => {
 
   return (
     <td
-      class="px-3 h-[60px] cursor-pointer border-r border-gray-200 last:border-r-0 max-w-[300px]"
+      class={`px-3 h-[60px] cursor-pointer border-r border-gray-200 last:border-r-0 max-w-[300px]
+        ${cell.validated ? 'bg-green-50 border-l-2 border-l-green-200' : ''}
+        `}
       onDblClick$={() => {
         isEditing.value = true;
       }}
