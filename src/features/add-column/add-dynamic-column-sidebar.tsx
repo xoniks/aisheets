@@ -16,77 +16,68 @@ import {
   TemplateTextArea,
   type Variable,
 } from '~/features/add-column/components/template-textarea';
-import {
-  type ColumnType,
-  type CreateColumn,
-  TEMPORAL_ID,
-  useColumnsStore,
-  useDatasetsStore,
-} from '~/state';
+import { type Column, useColumnsStore } from '~/state';
 
 interface SidebarProps {
-  onCreateColumn: QRL<(createColumn: CreateColumn) => void>;
+  onGenerateColumn: QRL<(column: Column) => Promise<Column>>;
 }
 
 const MODEL_URL =
   'https://huggingface.co/api/models?other=text-generation-inference&inference=warm';
-const DEFAULT_MODEL = 'google/gemma-2-2b-it';
 
 interface HFModel {
   id: string;
   tags?: string[];
 }
 
-const outputType = ['text', 'array', 'number', 'boolean', 'object'];
 export const AddDynamicColumnSidebar = component$<SidebarProps>(
-  ({ onCreateColumn }) => {
-    const { isOpenAddDynamicColumnSidebar, closeAddDynamicColumnSidebar } =
-      useModals('addDynamicColumnSidebar');
-    const { state: columns } = useColumnsStore();
+  ({ onGenerateColumn }) => {
+    const {
+      args,
+      isOpenAddDynamicColumnSidebar,
+      closeAddDynamicColumnSidebar,
+    } = useModals('addDynamicColumnSidebar');
+    const { state: columns, removeTemporalColumn } = useColumnsStore();
+    const isSubmitting = useSignal(false);
 
-    const type = useSignal<NonNullable<ColumnType>>('text');
-    const name = useSignal('');
+    const currentColumn = useSignal<Column | undefined>();
     const rowsToGenerate = useSignal('5');
-    const prompt = useSignal('');
-    const variables = useSignal<Variable[]>([]);
+    const prompt = useSignal<string>('');
+    const modelName = useSignal<string>('');
     const columnsReferences = useSignal<string[]>([]);
-
-    const { activeDataset } = useDatasetsStore();
+    const variables = useSignal<Variable[]>([]);
 
     const onSelectedVariables = $((variables: { id: string }[]) => {
       columnsReferences.value = variables.map((v) => v.id);
     });
-    const modelName = useSignal(DEFAULT_MODEL);
 
     useTask$(({ track }) => {
-      track(isOpenAddDynamicColumnSidebar);
+      track(currentColumn);
+      if (!currentColumn.value) return;
 
-      const getNextColumnName = (counter = 1): string => {
-        const manyColumnsWithName = columns.value
-          .filter((c) => c.id !== TEMPORAL_ID)
-          .filter((c) => c.name.startsWith('Column'));
-
-        const newPosibleColumnName = `Column ${manyColumnsWithName.length + 1}`;
-
-        if (!manyColumnsWithName.find((c) => c.name === newPosibleColumnName)) {
-          return newPosibleColumnName;
-        }
-
-        return getNextColumnName(counter + 1);
-      };
-
-      type.value = 'text';
-      name.value = getNextColumnName();
-      prompt.value = '';
-      modelName.value = DEFAULT_MODEL;
-      rowsToGenerate.value = '5';
-      columnsReferences.value = [];
       variables.value = columns.value
-        .filter((c) => c.id !== TEMPORAL_ID)
+        .filter(
+          (c) => c.id !== currentColumn.value?.id, //Remove the column itself
+        )
         .map((c) => ({
           id: c.id,
           name: c.name,
         }));
+    });
+
+    useTask$(({ track }) => {
+      track(isOpenAddDynamicColumnSidebar);
+      if (!isOpenAddDynamicColumnSidebar.value) return;
+
+      currentColumn.value = columns.value.find(
+        (c) => c.id === args.value?.columnId,
+      );
+
+      if (!currentColumn.value) return;
+
+      prompt.value = currentColumn.value.process!.prompt;
+      modelName.value = currentColumn.value.process!.modelName!;
+      rowsToGenerate.value = String(currentColumn.value.process!.limit);
     });
 
     const loadModels = useResource$(async ({ track, cleanup }) => {
@@ -116,24 +107,37 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
         }));
     });
 
-    const onCreate = $(() => {
-      if (!name.value) return;
+    const onGenerate = $(async () => {
+      if (!args.value) return;
+      isSubmitting.value = true;
 
-      const column: CreateColumn = {
-        name: name.value,
-        type: type.value,
-        kind: 'dynamic',
-        dataset: activeDataset.value,
+      const columnToSave = {
+        ...currentColumn.value!,
         process: {
-          modelName: modelName.value,
-          prompt: prompt.value,
+          ...currentColumn.value!.process,
+          modelName: modelName.value!,
+          prompt: prompt.value!,
           columnsReferences: columnsReferences.value,
           offset: 0,
           limit: Number(rowsToGenerate.value),
         },
       };
 
-      onCreateColumn(column);
+      const synchronizedColum = await onGenerateColumn(columnToSave);
+
+      currentColumn.value = {
+        ...synchronizedColum,
+      };
+
+      isSubmitting.value = false;
+    });
+
+    const handleCloseForm = $(async () => {
+      if (args.value?.mode === 'create') {
+        await removeTemporalColumn();
+      }
+
+      closeAddDynamicColumnSidebar();
     });
 
     return (
@@ -142,42 +146,13 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
           <div class="max-h-full">
             <div class="flex flex-col gap-4">
               <div class="flex items-center justify-between">
-                <Label for="column-name">Column name</Label>
+                <Label for="column-prompt">Prompt template</Label>
 
-                <Button
-                  size="sm"
-                  look="ghost"
-                  onClick$={closeAddDynamicColumnSidebar}
-                >
+                <Button size="sm" look="ghost" onClick$={handleCloseForm}>
                   <TbX />
                 </Button>
               </div>
-              <Input
-                id="column-name"
-                class="h-10"
-                placeholder="Enter column name"
-                bind:value={name}
-              />
 
-              <Label for="column-output-type">Output type</Label>
-
-              <Select.Root id="column-output-type" bind:value={type}>
-                <Select.Trigger>
-                  <Select.DisplayValue />
-                </Select.Trigger>
-                <Select.Popover>
-                  {outputType.map((type) => (
-                    <Select.Item key={type}>
-                      <Select.ItemLabel>{type}</Select.ItemLabel>
-                      <Select.ItemIndicator>
-                        <LuCheck class="h-4 w-4" />
-                      </Select.ItemIndicator>
-                    </Select.Item>
-                  ))}
-                </Select.Popover>
-              </Select.Root>
-
-              <Label for="column-prompt">Prompt template</Label>
               <TemplateTextArea
                 bind:value={prompt}
                 variables={variables}
@@ -227,8 +202,13 @@ export const AddDynamicColumnSidebar = component$<SidebarProps>(
           </div>
 
           <div class="flex h-16 w-full items-center justify-center">
-            <Button size="sm" class="w-full rounded-sm p-2" onClick$={onCreate}>
-              Create new column
+            <Button
+              size="sm"
+              class="w-full rounded-sm p-2"
+              onClick$={onGenerate}
+              disabled={isSubmitting.value}
+            >
+              {isSubmitting.value ? 'Generating...' : 'Generate'}
             </Button>
           </div>
         </div>

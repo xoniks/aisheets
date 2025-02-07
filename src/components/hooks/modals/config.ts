@@ -1,7 +1,6 @@
 export type ID =
   | 'addStaticColumnSidebar'
   | 'addDynamicColumnSidebar'
-  | 'runExecutionSidebar'
   | 'exportToHubSidebar';
 
 export type Status = 'open' | 'closed';
@@ -11,12 +10,11 @@ type Modal<A> = {
   args: A | null;
 };
 
-type ModalColumArg = Modal<{ columnId: string }>;
+type ModalColumArg = Modal<{ columnId: string; mode: 'create' | 'edit' }>;
 
 export type Modals = {
   addStaticColumnSidebar: ModalColumArg;
   addDynamicColumnSidebar: ModalColumArg;
-  runExecutionSidebar: ModalColumArg;
   exportToHubSidebar: Modal<null>;
 };
 

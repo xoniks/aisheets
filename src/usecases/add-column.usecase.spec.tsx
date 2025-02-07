@@ -17,7 +17,7 @@ test('should AddDynamicColumnSidebar does not call onCreateColumn initially', as
   await render(
     <ModalsProvider>
       <QwikCityMockProvider>
-        <AddDynamicColumnSidebar onCreateColumn={onCreateColumn} />
+        <AddDynamicColumnSidebar onGenerateColumn={onCreateColumn} />
       </QwikCityMockProvider>
     </ModalsProvider>,
   );
@@ -36,7 +36,6 @@ test('should save 10 cells', async () => {
       id: 'id',
       name: 'name',
       createdBy: 'test',
-      columns: [],
     },
     process: {
       limit: 10,

@@ -20,7 +20,6 @@ import { Button } from '~/components';
 import { useActiveModal, useModals, useToggle } from '~/components/hooks';
 import { useClickOutside } from '~/components/hooks/click/outside';
 import { useDebounce } from '~/components/hooks/debounce/debounce';
-import { RunExecutionSidebar } from '~/features/run-execution/run-execution-sidebar';
 import { updateColumnName } from '~/services';
 import {
   type Column,
@@ -29,7 +28,6 @@ import {
   TEMPORAL_ID,
   useColumnsStore,
 } from '~/state';
-import { useEditColumn } from '~/usecases/edit-column.usecase';
 
 const Icons: Record<Column['type'], any> = {
   text: TbAlignJustified,
@@ -49,21 +47,7 @@ export const ColumnIcon = component$<{ type: ColumnType; kind: ColumnKind }>(
 );
 
 export const TableHeader = component$(() => {
-  const { state: columns, replaceCell } = useColumnsStore();
-  const editColumn = useEditColumn();
-  const { args } = useActiveModal();
-
-  const onUpdateCell = $(async (column: Column) => {
-    const response = await editColumn(column);
-
-    for await (const { cell } of response) {
-      replaceCell(cell);
-    }
-  });
-
-  const indexColumnEditing = useComputed$(() =>
-    columns.value.findIndex((column) => column.id === args.value?.columnId),
-  );
+  const { state: columns } = useColumnsStore();
 
   return (
     <thead>
@@ -72,28 +56,27 @@ export const TableHeader = component$(() => {
           <>
             <TableCellHeader key={column.id} column={column} />
 
-            {indexColumnEditing.value === index ? (
-              <th key="temporal" class="min-w-[300px] w-[15vw]" />
-            ) : null}
+            <TableCellHeaderForExecution key={column.id} index={index} />
           </>
         ))}
 
-        <TableCellHeaderPlaceHolder />
+        <TableAddCellHeaderPlaceHolder />
       </tr>
-
-      <RunExecutionSidebar onUpdateCell={onUpdateCell} />
     </thead>
   );
 });
 
 const TableCellHeader = component$<{ column: Column }>(({ column }) => {
-  const { openRunExecutionSidebar } = useModals('runExecutionSidebar');
+  const { openAddDynamicColumnSidebar } = useModals('addDynamicColumnSidebar');
+  const { removeTemporalColumn } = useColumnsStore();
   const isEditingCellName = useToggle();
   const newName = useSignal(column.name);
 
   useDebounce(
     newName,
     $((debouncedName) => {
+      if (column.id === TEMPORAL_ID) return;
+
       server$(async () => {
         await updateColumnName(column.id, debouncedName.value);
       })();
@@ -107,12 +90,15 @@ const TableCellHeader = component$<{ column: Column }>(({ column }) => {
     }),
   );
 
-  const editCell = $(() => {
+  const editCell = $(async () => {
     if (isEditingCellName.isOpen.value) return;
     if (column.id === TEMPORAL_ID) return;
 
-    openRunExecutionSidebar({
+    await removeTemporalColumn();
+
+    openAddDynamicColumnSidebar({
       columnId: column.id,
+      mode: 'edit',
     });
   });
 
@@ -127,7 +113,7 @@ const TableCellHeader = component$<{ column: Column }>(({ column }) => {
   return (
     <th
       id={column.id}
-      class="min-w-[300px] w-[15vw] border-b border-r cursor-pointer border-gray-200 bg-white px-3 py-2 text-left font-medium text-gray-600 sticky top-0 last:border-r-0 z-0"
+      class="w-[600px] border-b border-r cursor-pointer border-gray-200 bg-white px-3 py-2 text-left font-medium text-gray-600 sticky top-0 z-0"
     >
       <div class="flex items-center justify-between gap-2" ref={ref}>
         <div class="flex items-center gap-2">
@@ -149,7 +135,7 @@ const TableCellHeader = component$<{ column: Column }>(({ column }) => {
         </div>
 
         {column.id !== TEMPORAL_ID && (
-          <Button look="ghost" class=" rounded-full" onClick$={editCell}>
+          <Button look="ghost" class="h-2" onClick$={editCell}>
             <TbDots class="text-gray-400" />
           </Button>
         )}
@@ -158,9 +144,24 @@ const TableCellHeader = component$<{ column: Column }>(({ column }) => {
   );
 });
 
-const TableCellHeaderPlaceHolder = component$(() => {
+const TableCellHeaderForExecution = component$<{ index: number }>(
+  ({ index }) => {
+    const { state: columns } = useColumnsStore();
+    const { args } = useActiveModal();
+
+    const indexColumnEditing = useComputed$(() =>
+      columns.value.findIndex((column) => column.id === args.value?.columnId),
+    );
+
+    if (indexColumnEditing.value !== index) return null;
+
+    return <th class="w-[600px]" />;
+  },
+);
+
+const TableAddCellHeaderPlaceHolder = component$(() => {
   const { openAddDynamicColumnSidebar } = useModals('addDynamicColumnSidebar');
-  const { state: columns } = useColumnsStore();
+  const { state: columns, addTemporalColumn } = useColumnsStore();
 
   const lastColumnId = useComputed$(
     () => columns.value[columns.value.length - 1].id,
@@ -171,24 +172,26 @@ const TableCellHeaderPlaceHolder = component$(() => {
     if (columns.value.length === 1 && lastColumnId.value === TEMPORAL_ID) {
       openAddDynamicColumnSidebar({
         columnId: lastColumnId.value,
+        mode: 'create',
       });
     }
+  });
+
+  const handleNewColumn = $(async () => {
+    await addTemporalColumn();
+
+    openAddDynamicColumnSidebar({
+      columnId: TEMPORAL_ID,
+      mode: 'create',
+    });
   });
 
   return (
     <th
       id={lastColumnId.value}
-      class="min-w-[300px] w-[15vw] border-b border-r cursor-pointer border-gray-200 bg-white py-2 text-left font-medium text-gray-600 sticky top-0 last:border-r-0 z-0"
+      class="w-[10px] border-b border-r cursor-pointer border-gray-200 bg-white py-2 text-left font-medium text-gray-600 sticky top-0 z-0"
     >
-      <Button
-        look="ghost"
-        class="h-2"
-        onClick$={() =>
-          openAddDynamicColumnSidebar({
-            columnId: lastColumnId.value,
-          })
-        }
-      >
+      <Button look="ghost" class="h-2" onClick$={handleNewColumn}>
         <TbPlus />
       </Button>
     </th>

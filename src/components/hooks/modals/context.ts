@@ -14,10 +14,6 @@ export const initialState: State = {
       status: 'closed',
       args: null,
     },
-    runExecutionSidebar: {
-      status: 'closed',
-      args: null,
-    },
     exportToHubSidebar: {
       status: 'closed',
       args: null,
