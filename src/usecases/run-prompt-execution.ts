@@ -9,6 +9,7 @@ export interface PromptExecutionParams {
   data?: object;
   examples?: string[];
   stream?: boolean;
+  timeout?: number;
 }
 
 export interface PromptExecutionResponse {
@@ -69,6 +70,9 @@ the response and do not generate any introductory text. Only a clear response is
   );
 };
 
+
+const DEFAULT_TIMEOUT = 10000;
+
 type Provider =
   | 'fal-ai'
   | 'replicate'
@@ -97,6 +101,7 @@ export const runPromptExecution = async ({
   instruction,
   data,
   examples,
+  timeout,
 }: PromptExecutionParams): Promise<PromptExecutionResponse> => {
   let inputPrompt: string;
   switch (data && Object.keys(data).length > 0) {
@@ -117,8 +122,12 @@ export const runPromptExecution = async ({
         [{ role: 'user', content: inputPrompt }],
         modelProvider,
         accessToken,
-      ),
-      { use_cache: false },
+
+      },
+      {
+        use_cache: false,
+        signal: AbortSignal.timeout(timeout ?? DEFAULT_TIMEOUT),
+      },
     );
     return { value: response.choices[0].message.content };
   } catch (e) {
@@ -139,6 +148,7 @@ export const runPromptExecutionStream = async function* ({
   instruction,
   data,
   examples,
+  timeout,
 }: PromptExecutionParams): AsyncGenerator<PromptExecutionResponse> {
   let inputPrompt: string;
   switch (data && Object.keys(data).length > 0) {
@@ -159,8 +169,11 @@ export const runPromptExecutionStream = async function* ({
         [{ role: 'user', content: inputPrompt }],
         modelProvider,
         accessToken,
-      ),
-      { use_cache: false },
+      },
+      {
+        use_cache: false,
+        signal: AbortSignal.timeout(timeout ?? DEFAULT_TIMEOUT),
+      },
     );
 
     for await (const chunk of stream) {
