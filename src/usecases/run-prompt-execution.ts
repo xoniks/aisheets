@@ -70,7 +70,6 @@ the response and do not generate any introductory text. Only a clear response is
   );
 };
 
-
 const DEFAULT_TIMEOUT = 10000;
 
 type Provider =
@@ -122,8 +121,7 @@ export const runPromptExecution = async ({
         [{ role: 'user', content: inputPrompt }],
         modelProvider,
         accessToken,
-
-      },
+      ),
       {
         use_cache: false,
         signal: AbortSignal.timeout(timeout ?? DEFAULT_TIMEOUT),
@@ -169,7 +167,7 @@ export const runPromptExecutionStream = async function* ({
         [{ role: 'user', content: inputPrompt }],
         modelProvider,
         accessToken,
-      },
+      ),
       {
         use_cache: false,
         signal: AbortSignal.timeout(timeout ?? DEFAULT_TIMEOUT),
