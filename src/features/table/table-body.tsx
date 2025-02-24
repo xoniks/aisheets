@@ -13,6 +13,7 @@ export const TableBody = component$(() => {
     const cell = column.cells[rowIndex];
 
     if (!cell) {
+      // Temporal cell for skeleton
       return {
         id: `${column.id}-${rowIndex}`,
         value: '',
@@ -20,6 +21,7 @@ export const TableBody = component$(() => {
         validated: false,
         column,
         updatedAt: new Date(),
+        generated: false,
         idx: rowIndex,
       };
     }
