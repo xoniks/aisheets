@@ -3,7 +3,7 @@ import { QwikCityMockProvider } from '@builder.io/qwik-city';
 import { createDOM } from '@builder.io/qwik/testing';
 import { expect, test, vi } from 'vitest';
 import { ModalsProvider } from '~/components';
-import { ExecutionForm } from '~/features';
+import { ExecutionForm } from '~/features/add-column';
 import type { CreateColumn } from '~/state';
 import { useAddColumnUseCase } from '~/usecases/add-column.usecase';
 

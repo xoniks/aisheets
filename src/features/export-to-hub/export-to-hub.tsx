@@ -9,10 +9,9 @@ import { LuArrowRightFromLine } from '@qwikest/icons/lucide';
 
 import { Button, Checkbox, Input, Label, Modal } from '~/components';
 import { useModals } from '~/components/hooks/modals/use-modals';
-import { TEMPORAL_ID, useDatasetsStore, useSession } from '~/state';
+import { useSession } from '~/loaders';
+import { TEMPORAL_ID, useDatasetsStore } from '~/state';
 import { useExportDataset } from '~/usecases/export-to-hub.usecase';
-
-export { useSession } from '~/state';
 
 export const ExportToHub = component$(() => {
   const exportDataset = useExportDataset();
