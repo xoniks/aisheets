@@ -1,12 +1,11 @@
-import { component$, useSignal } from '@builder.io/qwik';
+import { component$, useComputed$, useSignal } from '@builder.io/qwik';
 import { useExecution } from '~/features/add-column';
 import { TableCell } from '~/features/table/table-cell';
 import { type Cell, type Column, TEMPORAL_ID, useColumnsStore } from '~/state';
 
 export const TableBody = component$(() => {
-  const { state: columns } = useColumnsStore();
+  const { state: columns, firstColum } = useColumnsStore();
   const { columnId } = useExecution();
-  const rowCount = columns.value[0]?.process?.limit ?? 0;
   const expandedRows = useSignal<Set<number>>(new Set());
 
   const getCell = (column: Column, rowIndex: number): Cell => {
@@ -29,9 +28,16 @@ export const TableBody = component$(() => {
     return cell;
   };
 
+  const rowCount = useComputed$(() => {
+    if (!firstColum.value.process)
+      throw new Error('No process, review this for static columns');
+
+    return firstColum.value.process.limit;
+  });
+
   return (
     <tbody>
-      {Array.from({ length: rowCount }).map((_, rowIndex) => (
+      {Array.from({ length: rowCount.value }).map((_, rowIndex) => (
         <tr key={rowIndex} class="hover:bg-gray-50/50 transition-colors">
           {columns.value.map((column) => {
             const cell = getCell(column, rowIndex);

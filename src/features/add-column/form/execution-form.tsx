@@ -3,6 +3,7 @@ import {
   type QRL,
   Resource,
   component$,
+  useComputed$,
   useResource$,
   useSignal,
   useTask$,
@@ -10,6 +11,7 @@ import {
 import { LuBookmark, LuCheck, LuEgg, LuXCircle } from '@qwikest/icons/lucide';
 
 import { Button, Input, Label, Select } from '~/components';
+import { nextTick } from '~/components/hooks/tick';
 import {
   TemplateTextArea,
   type Variable,
@@ -31,8 +33,16 @@ interface SidebarProps {
 export const ExecutionForm = component$<SidebarProps>(
   ({ column, onGenerateColumn }) => {
     const { mode, close } = useExecution();
-    const { state: columns, removeTemporalColumn } = useColumnsStore();
+    const {
+      state: columns,
+      firstColum,
+      removeTemporalColumn,
+      canGenerate,
+    } = useColumnsStore();
+    const parseModelId = (model: Model) => `${model.id}-${model.provider}`;
+
     const isSubmitting = useSignal(false);
+    const isDisabledGenerateButton = useSignal(true);
 
     const prompt = useSignal<string>('');
     const columnsReferences = useSignal<string[]>([]);
@@ -46,7 +56,29 @@ export const ExecutionForm = component$<SidebarProps>(
       columnsReferences.value = variables.map((v) => v.id);
     });
 
-    const uniqueModelId = (model: Model) => `${model.id}-${model.provider}`;
+    const isTouched = useComputed$(() => {
+      return (
+        prompt.value !== column.process!.prompt ||
+        selectedModel.value?.id !== column.process!.modelName ||
+        rowsToGenerate.value !== String(column.process!.limit)
+      );
+    });
+
+    useTask$(async ({ track }) => {
+      track(isSubmitting);
+
+      if (mode.value === 'add') {
+        isDisabledGenerateButton.value = isSubmitting.value;
+        return;
+      }
+
+      track(columns);
+      track(isTouched);
+
+      const canRegenerate = await canGenerate(column);
+      isDisabledGenerateButton.value =
+        !canRegenerate || isSubmitting.value || !isTouched.value;
+    });
 
     useTask$(() => {
       variables.value = columns.value
@@ -62,14 +94,11 @@ export const ExecutionForm = component$<SidebarProps>(
       if (!process) return;
 
       prompt.value = process.prompt;
-
       selectedModel.value = {
         id: process.modelName,
         provider: process.modelProvider!,
       };
-
       inputModelId.value = selectedModel.value.id;
-
       rowsToGenerate.value = String(process.limit);
     });
 
@@ -81,7 +110,7 @@ export const ExecutionForm = component$<SidebarProps>(
       isSubmitting.value = true;
 
       const modelName = inputModelId.value || selectedModel.value!.id;
-      const modelProvider = selectedModel.value?.provider;
+      const modelProvider = selectedModel.value?.provider!;
 
       const columnToSave = {
         ...column,
@@ -89,7 +118,6 @@ export const ExecutionForm = component$<SidebarProps>(
           ...column.process,
           modelName,
           modelProvider,
-
           prompt: prompt.value!,
           columnsReferences: columnsReferences.value,
           offset: 0,
@@ -137,7 +165,7 @@ export const ExecutionForm = component$<SidebarProps>(
                   }
 
                   return (
-                    <Select.Root value={uniqueModelId(selectedModel.value)}>
+                    <Select.Root value={parseModelId(selectedModel.value)}>
                       <Select.Trigger class="px-4 bg-primary rounded-base border-secondary-foreground">
                         <Select.DisplayValue />
                       </Select.Trigger>
@@ -145,8 +173,8 @@ export const ExecutionForm = component$<SidebarProps>(
                         {models.map((model, idx) => (
                           <Select.Item
                             key={idx}
+                            value={parseModelId(model)}
                             class="text-foreground hover:bg-accent"
-                            value={uniqueModelId(model)}
                             onClick$={() => {
                               selectedModel.value = model;
                               console.log(selectedModel.value);
@@ -177,7 +205,20 @@ export const ExecutionForm = component$<SidebarProps>(
                 id="column-rows"
                 type="number"
                 class="px-4 h-10 border-secondary-foreground bg-primary"
-                bind:value={rowsToGenerate}
+                max={firstColum.value.process!.limit}
+                min="1"
+                onInput$={(_, el) => {
+                  if (Number(el.value) > firstColum.value.process!.limit) {
+                    nextTick(() => {
+                      rowsToGenerate.value = String(
+                        firstColum.value.process!.limit,
+                      );
+                    });
+                  }
+
+                  rowsToGenerate.value = el.value;
+                }}
+                value={rowsToGenerate.value}
               />
 
               <div class="relative">
@@ -196,7 +237,7 @@ export const ExecutionForm = component$<SidebarProps>(
                     key={isSubmitting.value.toString()}
                     look="primary"
                     onClick$={onGenerate}
-                    disabled={isSubmitting.value}
+                    disabled={isDisabledGenerateButton.value}
                   >
                     <div class="flex items-center gap-4">
                       <LuEgg class="text-xl" />
