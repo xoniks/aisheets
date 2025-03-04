@@ -2,11 +2,13 @@ import { component$ } from '@builder.io/qwik';
 import { ExecutionProvider } from '~/features/add-column';
 import { TableBody } from '~/features/table/table-body';
 import { TableHeader } from '~/features/table/table-header';
+import { TableView } from '~/features/table/table-view';
 
 export const Table = component$(() => {
   return (
     <ExecutionProvider>
       <div class="flex flex-col h-full">
+        <TableView />
         <div class="sticky -top-4 z-30 bg-white">
           <table class="border-separate border-spacing-0 text-sm">
             <TableHeader />

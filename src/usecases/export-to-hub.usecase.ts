@@ -42,7 +42,7 @@ export const useExportDataset = () =>
       throw new Error('Dataset not found');
     }
 
-    const filePath = await exportDatasetToParquet(foundDataset);
+    const tempFolder = await exportDatasetToFolder(foundDataset);
 
     const owner = requestedOwner || session.user.username;
     const repoId = `${owner}/${name}`;
@@ -67,13 +67,13 @@ export const useExportDataset = () =>
           {
             path: 'train.parquet',
             content: new Blob([
-              await fs.readFile(path.join(filePath, 'file.parquet')),
+              await fs.readFile(path.join(tempFolder, 'file.parquet')),
             ]),
           },
           {
             path: 'config.yml',
             content: new Blob([
-              await fs.readFile(path.join(filePath, 'config.yml')),
+              await fs.readFile(path.join(tempFolder, 'config.yml')),
             ]),
           },
         ],
@@ -185,7 +185,7 @@ async function createDatasetContent(
 
   // Collect and write data rows
   const jsonl = [];
-  for await (const row of listDatasetRows({ dataset })) {
+  for await (const row of listDatasetRows({ dataset, visibleOnly: true })) {
     jsonl.push(JSON.stringify(row));
   }
   await fs.writeFile(jsonlPath, jsonl.join('\n'));
@@ -205,7 +205,7 @@ async function createDatasetContent(
   }
 }
 
-async function exportDatasetToParquet(dataset: Dataset): Promise<string> {
+async function exportDatasetToFolder(dataset: Dataset): Promise<string> {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmp-'));
 
   try {

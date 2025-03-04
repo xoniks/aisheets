@@ -86,8 +86,10 @@ export const TableBody = component$(() => {
     };
 
     data.value = Array.from({ length: rowCount.value }, (_, rowIndex) =>
-      Array.from({ length: columns.value.length }, (_, colIndex) =>
-        getCell(columns.value[colIndex], rowIndex),
+      Array.from(
+        { length: columns.value.filter((c) => c.visible).length },
+        (_, colIndex) =>
+          getCell(columns.value.filter((c) => c.visible)[colIndex], rowIndex),
       ),
     );
   });
