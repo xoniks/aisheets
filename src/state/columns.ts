@@ -2,6 +2,7 @@ import { $, type NoSerialize, useComputed$ } from '@builder.io/qwik';
 
 import { type Dataset, useDatasetsStore } from '~/state/datasets';
 
+export type ColumnType = 'text' | 'array' | 'number' | 'boolean' | 'object';
 export type ColumnKind = 'static' | 'dynamic';
 
 export interface Process {
@@ -19,7 +20,7 @@ export interface Process {
 
 export interface CreateColumn {
   name: string;
-  type: string;
+  type: ColumnType;
   kind: ColumnKind;
   dataset: Omit<Dataset, 'columns'>;
   process?: {
@@ -35,12 +36,12 @@ export interface CreateColumn {
 }
 
 export type Cell = {
-  id?: string;
+  id: string;
   idx: number;
   updatedAt: Date;
   generating: boolean;
   validated: boolean;
-  value?: any;
+  value?: string;
   error?: string;
   column?: {
     id: string;
@@ -50,7 +51,7 @@ export type Cell = {
 export interface Column {
   id: string;
   name: string;
-  type: string;
+  type: ColumnType;
   kind: ColumnKind;
   visible: boolean;
   process?: Process | undefined;
@@ -297,9 +298,9 @@ export const useColumnsStore = () => {
       const column = columns.value.find((c) => c.id === cell.column?.id);
       if (!column) return;
 
-      if (column.cells.some((c) => c.idx === cell.idx)) {
+      if (column.cells.some((c) => c.id === cell.id)) {
         column.cells = [
-          ...column.cells.map((c) => (c.idx === cell.idx ? cell : c)),
+          ...column.cells.map((c) => (c.id === cell.id ? cell : c)),
         ];
       } else {
         column.cells.push(cell);

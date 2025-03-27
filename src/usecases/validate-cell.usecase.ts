@@ -1,26 +1,22 @@
 import { server$ } from '@builder.io/qwik-city';
 
-import { createCell, updateCell } from '~/services';
-import type { Cell } from '~/state';
+import { updateCell } from '~/services';
 
 interface EditCell {
-  id?: string;
-  idx: number;
+  id: string;
   value: string;
   validated: boolean;
-  column: {
-    id: string;
-  };
 }
 
 export const useValidateCellUseCase = () =>
-  server$(async (editCell: EditCell): Promise<Cell> => {
+  server$(async (editCell: EditCell): Promise<boolean> => {
     try {
-      return await updateCell(editCell);
-    } catch (error) {
-      return await createCell({
-        cell: editCell,
-        columnId: editCell.column.id,
+      await updateCell({
+        ...editCell,
       });
+
+      return true;
+    } catch (error) {
+      return false;
     }
   });

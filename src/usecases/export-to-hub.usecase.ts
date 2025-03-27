@@ -3,12 +3,16 @@ import os from 'node:os';
 import path from 'node:path';
 import yaml from 'yaml';
 
+import { DuckDBInstance } from '@duckdb/node-api';
+
 import { type HubApiError, createRepo, uploadFiles } from '@huggingface/hub';
 
 import { type RequestEventBase, server$ } from '@builder.io/qwik-city';
 import { getColumnCellByIdx, getRowCells } from '~/services/repository/cells';
-import { getDatasetById } from '~/services/repository/datasets';
-import { exportDatasetTableRows } from '~/services/repository/tables';
+import {
+  getDatasetById,
+  listDatasetRows,
+} from '~/services/repository/datasets';
 import {
   type Cell,
   type Dataset,
@@ -38,14 +42,7 @@ export const useExportDataset = () =>
       throw new Error('Dataset not found');
     }
 
-    const configPath = await createDatasetConfig(dataset);
-    const parquetFile = await exportDatasetTableRows({
-      dataset,
-      columns: dataset.columns.map((column) => ({
-        id: column.id,
-        name: column.name,
-      })),
-    });
+    const tempFolder = await exportDatasetToFolder(foundDataset);
 
     const owner = requestedOwner || session.user.username;
     const repoId = `${owner}/${name}`;
@@ -69,11 +66,15 @@ export const useExportDataset = () =>
         files: [
           {
             path: 'train.parquet',
-            content: new Blob([await fs.readFile(parquetFile)]),
+            content: new Blob([
+              await fs.readFile(path.join(tempFolder, 'file.parquet')),
+            ]),
           },
           {
             path: 'config.yml',
-            content: new Blob([await fs.readFile(configPath)]),
+            content: new Blob([
+              await fs.readFile(path.join(tempFolder, 'config.yml')),
+            ]),
           },
         ],
       });
@@ -166,12 +167,52 @@ async function getFirstRowData(columnsReferences: string[]) {
   );
 }
 
-async function createDatasetConfig(dataset: Dataset): Promise<string> {
-  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmp-'));
-
+async function createDatasetConfig(
+  tempDir: string,
+  dataset: Dataset,
+): Promise<void> {
   const configPath = path.join(tempDir, 'config.yml');
   const columnConfigs = await generateDatasetConfig(dataset);
   await fs.writeFile(configPath, yaml.stringify({ columns: columnConfigs }));
+}
 
-  return configPath;
+async function createDatasetContent(
+  tempDir: string,
+  dataset: Dataset,
+): Promise<void> {
+  const jsonlPath = path.join(tempDir, 'file.jsonl');
+  const parquetPath = path.join(tempDir, 'file.parquet');
+
+  // Collect and write data rows
+  const jsonl = [];
+  for await (const row of listDatasetRows({ dataset, visibleOnly: true })) {
+    jsonl.push(JSON.stringify(row));
+  }
+  await fs.writeFile(jsonlPath, jsonl.join('\n'));
+
+  // Convert to parquet
+  const instance = await DuckDBInstance.create(':memory:');
+  const connection = await instance.connect();
+  try {
+    await connection.run(
+      `CREATE TABLE tbl AS SELECT * FROM read_json_auto('${jsonlPath}')`,
+    );
+    await connection.run(`COPY tbl TO '${parquetPath}' (FORMAT PARQUET)`);
+  } catch (error) {
+    throw new Error(`Error converting to parquet: ${error}`);
+  } finally {
+    await connection.close();
+  }
+}
+
+async function exportDatasetToFolder(dataset: Dataset): Promise<string> {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tmp-'));
+
+  try {
+    await createDatasetConfig(tempDir, dataset);
+    await createDatasetContent(tempDir, dataset);
+    return tempDir;
+  } catch (error) {
+    throw new Error(`Error exporting dataset: ${error}`);
+  }
 }

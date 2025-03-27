@@ -69,7 +69,7 @@ export const TableBody = component$(() => {
       if (!cell) {
         // Temporal cell for skeleton
         return {
-          id: undefined,
+          id: `${column.id}-${rowIndex}`,
           value: '',
           error: '',
           validated: false,
@@ -108,21 +108,22 @@ export const TableBody = component$(() => {
         </tr>
       )}
 
-      {data.value.slice(startIndex.value, endIndex.value).map((row, i) => {
-        const actualRowIndex = startIndex.value + i;
+      {data.value.slice(startIndex.value, endIndex.value).map((row, index) => {
+        const actualRowIndex = startIndex.value + index;
         return (
           <tr
             key={actualRowIndex}
             class="hover:bg-gray-50/50 transition-colors"
           >
-            {row.map((cell, j) => {
+            {row.map((cell) => {
               return (
-                <Fragment key={`${i}-${j}`}>
+                <Fragment key={cell.id}>
                   {cell.column?.id === TEMPORAL_ID ? (
                     <td class="min-w-80 w-80 max-w-80 px-2 min-h-[100px] h-[100px] border-[0.5px] border-t-0 border-r-0" />
                   ) : (
                     <>
                       <TableCell cell={cell} />
+
                       {/* When the user scrolls until this cell we should load
                         If the user has 20 rows, on rowCount - buffer, should be fetch
                         The buffer now is 2, so on cell number 18, we should fetch new rows
@@ -146,6 +147,7 @@ export const TableBody = component$(() => {
           </tr>
         );
       })}
+
       {/* Bottom spacer row */}
       {bottomSpacerHeight.value > 0 && (
         <tr style={{ height: `${bottomSpacerHeight.value}px` }}>
