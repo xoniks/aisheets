@@ -5,6 +5,7 @@ import {
   DEFAULT_MODEL_PROVIDER,
   INFERENCE_TIMEOUT,
 } from '~/config';
+import { createSourcesFromWebQueries } from '~/services/websearch/search-sources';
 import type { Column, Session } from '~/state';
 import type { ColumnKind } from '~/state/columns';
 import { createColumn } from '../services/repository/columns';
@@ -206,6 +207,182 @@ function extractDatasetConfig(text: string, searchEnabled = true) {
 }
 
 /**
+ * Creates a dataset with the suggested columns from the assistant
+ */
+async function createDatasetWithColumns(
+  columns: Array<{ name: string; prompt: string }>,
+  session: Session,
+  modelName: string = DEFAULT_MODEL,
+  modelProvider: string = DEFAULT_MODEL_PROVIDER,
+  datasetName = 'New Dataset',
+) {
+  // Create the dataset
+  const dataset = await createDataset({
+    name: datasetName,
+    createdBy: session.user.username,
+  });
+
+  // Create all columns first
+  const createdColumns: Column[] = [];
+  for (const column of columns) {
+    const newColumn = await createColumn({
+      name: column.name,
+      type: 'VARCHAR',
+      kind: 'dynamic' as ColumnKind,
+      dataset,
+    });
+    createdColumns.push(newColumn);
+  }
+
+  // Create processes for each column with correct references
+  const columnNames = columns.map((col) => col.name);
+  for (let i = 0; i < columns.length; i++) {
+    const column = columns[i];
+    const createdColumn = createdColumns[i];
+
+    const columnReferences = extractColumnReferences(
+      column.prompt,
+      columnNames,
+    );
+
+    const process = await createProcess({
+      process: {
+        modelName,
+        modelProvider,
+        prompt: column.prompt,
+        columnsReferences: columnReferences.map((ref) => {
+          const refIndex = columnNames.indexOf(ref);
+          return createdColumns[refIndex].id;
+        }),
+        offset: 0,
+        limit: 5,
+      },
+      column: { id: createdColumn.id },
+    });
+
+    createdColumn.process = process;
+  }
+
+  return {
+    dataset,
+    columns: createdColumns.map((col) => ({
+      name: col.name,
+      prompt:
+        col.process?.prompt ||
+        columns.find((c) => c.name === col.name)?.prompt ||
+        '',
+    })),
+    createdColumns,
+  };
+}
+
+/**
+ * Creates web sources for the dataset based on search queries
+ */
+async function createWebSources(
+  dataset: { id: string; name: string },
+  queries: string[],
+  session: Session,
+) {
+  await createSourcesFromWebQueries({
+    dataset,
+    queries,
+    options: {
+      accessToken: session.token,
+    },
+  });
+}
+
+/**
+ * Generates cells for all columns in the dataset
+ */
+async function generateDatasetCells(columns: Column[], session: Session) {
+  for (const column of columns) {
+    if (!column.process) continue;
+
+    const hasReferences = column.process.columnsReferences?.length > 0;
+
+    for await (const _ of generateCells({
+      column,
+      process: column.process,
+      session,
+      limit: column.process.limit,
+      offset: column.process.offset,
+      parallel: hasReferences,
+    })) {
+      // TODO: add abort signal?
+    }
+  }
+}
+
+/**
+ * Creates a dataset with the suggested columns from the assistant
+ */
+async function createAutoDataset(
+  columns: Array<{ name: string; prompt: string }>,
+  session: Session,
+  modelName: string = DEFAULT_MODEL,
+  modelProvider: string = DEFAULT_MODEL_PROVIDER,
+  datasetName = 'New Dataset',
+  queries?: string[],
+) {
+  // Step 1: Create dataset and columns
+  const { dataset, createdColumns } = await createDatasetWithColumns(
+    columns,
+    session,
+    modelName,
+    modelProvider,
+    datasetName,
+  );
+
+  // Step 2: Create web sources if queries are provided
+  if (queries && queries.length > 0) {
+    await createWebSources(dataset, queries, session);
+  }
+
+  // Step 3: Start cell generation in the background
+  Promise.resolve().then(async () => {
+    try {
+      await generateDatasetCells(createdColumns, session);
+    } catch (error) {
+      console.error('❌ Error generating cells:', error);
+    }
+  });
+
+  return {
+    dataset,
+    columns: createdColumns.map((col) => ({
+      name: col.name,
+      prompt:
+        col.process?.prompt ||
+        columns.find((c) => c.name === col.name)?.prompt ||
+        '',
+    })),
+  };
+}
+
+/**
+ * Extracts column references from a prompt using the {{column_name}} syntax
+ */
+function extractColumnReferences(
+  prompt: string,
+  availableColumns: string[],
+): string[] {
+  const references: string[] = [];
+  const regex = /{{([^}]+)}}/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(prompt)) !== null) {
+    const columnName = match[1].trim();
+    if (availableColumns.includes(columnName)) {
+      references.push(columnName);
+    }
+  }
+
+  return references;
+}
+
+/**
  * Executes the assistant with the provided parameters
  */
 export const runAutoDataset = async function (
@@ -270,126 +447,13 @@ export const runAutoDataset = async function (
       modelName,
       modelProvider,
       datasetName,
+      params.searchEnabled ? queries : undefined,
     );
 
     // Return the columns, queries, and dataset
-    return { columns, queries, dataset, createdColumns };
+    return { columns, queries, dataset: dataset.id, createdColumns };
   } catch (error) {
     console.error('❌ [Assistant] Error in assistant execution:', error);
     return error instanceof Error ? error.message : String(error);
   }
 };
-
-/**
- * Creates a dataset with the suggested columns from the assistant
- */
-async function createAutoDataset(
-  columns: Array<{ name: string; prompt: string }>,
-  session: Session,
-  modelName: string = DEFAULT_MODEL,
-  modelProvider: string = DEFAULT_MODEL_PROVIDER,
-  datasetName = 'New Dataset',
-) {
-  // Create the dataset
-  const dataset = await createDataset({
-    name: datasetName,
-    createdBy: session.user.username,
-  });
-
-  // Create all columns first
-  const createdColumns: Column[] = [];
-  for (const column of columns) {
-    const newColumn = await createColumn({
-      name: column.name,
-      type: 'VARCHAR',
-      kind: 'dynamic' as ColumnKind,
-      dataset,
-    });
-    createdColumns.push(newColumn);
-  }
-
-  // Create processes for each column with correct references
-  const columnNames = columns.map((col) => col.name);
-  for (let i = 0; i < columns.length; i++) {
-    const column = columns[i];
-    const createdColumn = createdColumns[i];
-
-    const columnReferences = extractColumnReferences(
-      column.prompt,
-      columnNames,
-    );
-
-    const process = await createProcess({
-      process: {
-        modelName,
-        modelProvider,
-        prompt: column.prompt,
-        columnsReferences: columnReferences.map((ref) => {
-          const refIndex = columnNames.indexOf(ref);
-          return createdColumns[refIndex].id;
-        }),
-        offset: 0,
-        limit: 5,
-      },
-      column: { id: createdColumn.id },
-    });
-
-    createdColumn.process = process;
-  }
-
-  // Start cell generation in the background
-  Promise.resolve().then(async () => {
-    try {
-      for (const column of createdColumns) {
-        if (!column.process) continue;
-
-        const hasReferences = column.process.columnsReferences?.length > 0;
-
-        for await (const _ of generateCells({
-          column,
-          process: column.process,
-          session,
-          limit: column.process.limit,
-          offset: column.process.offset,
-          parallel: hasReferences,
-        })) {
-          // TODO: add abort signal?
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error generating cells:', error);
-    }
-  });
-
-  return {
-    dataset: dataset.id,
-    columns: createdColumns.map((col) => ({
-      name: col.name,
-      prompt:
-        col.process?.prompt ||
-        columns.find((c) => c.name === col.name)?.prompt ||
-        '',
-    })),
-  };
-}
-
-/**
- * Extracts column references from a prompt using the {{column_name}} syntax
- */
-function extractColumnReferences(
-  prompt: string,
-  availableColumns: string[],
-): string[] {
-  const references: string[] = [];
-  const regex = /{{([^}]+)}}/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = regex.exec(prompt)) !== null) {
-    const columnName = match[1].trim();
-    if (availableColumns.includes(columnName)) {
-      references.push(columnName);
-    }
-  }
-
-  return references;
-}

@@ -95,14 +95,14 @@ const runAutoDatasetAction = server$(async function (
   return await runAutoDataset.call(this, {
     instruction,
     searchEnabled,
-    maxSearchQueries: 2,
+    maxSearchQueries: 1,
   });
 });
 
 export default component$(() => {
   const nav = useNavigate();
-  const prompt = useSignal('');
   const searchOnWeb = useSignal(true);
+  const prompt = useSignal('');
   const startingPrompts = [
     'Summaries of popular Motown songs by artist, including lyrics',
     'Top list of recent climate-related disaster with a description of the event and location',
@@ -202,7 +202,6 @@ export default component$(() => {
                     look="primary"
                     onClick$={handleAssistant}
                     disabled={isLoading.value || !prompt.value.trim()}
-                    class="h-[30px] w-[40px] p-1"
                   >
                     <LuEgg class="text-2xl" />
                   </Button>
