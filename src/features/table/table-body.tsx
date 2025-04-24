@@ -38,10 +38,14 @@ export const TableBody = component$(() => {
   const rowCount = useSignal(0);
 
   const handleSelectRow$ = $((idx: number) => {
-    if (selectedRows.value.includes(idx)) {
-      selectedRows.value = selectedRows.value.filter((row) => row !== idx);
-    } else {
-      selectedRows.value = [...selectedRows.value, idx];
+    selectedRows.value = [idx];
+  });
+
+  const handleSelectTo$ = $((idx: number) => {
+    if (!selectedRows.value.length) return;
+
+    for (let i = selectedRows.value[0] + 1; i <= idx; i++) {
+      selectedRows.value = [...selectedRows.value, i];
     }
   });
 
@@ -149,52 +153,62 @@ export const TableBody = component$(() => {
         return (
           <tr
             key={actualRowIndex}
-            class="hover:bg-gray-50/50 transition-colors"
+            class={cn('hover:bg-gray-50/50 transition-colors', {
+              'bg-gray-50/50 hover:bg-gray-50/50':
+                selectedRows.value.includes(actualRowIndex),
+            })}
           >
             <td
               class={cn(
                 'px-2 text-center border-[0.5px] border-t-0 bg-neutral-100 select-none',
                 {
-                  'bg-neutral-300': selectedRows.value.includes(actualRowIndex),
+                  'bg-neutral-200': selectedRows.value.includes(actualRowIndex),
                 },
               )}
               preventdefault:contextmenu
               onClick$={(e) => {
-                if (e.button === 2) {
-                  e.preventDefault();
-                  return;
+                if (e.shiftKey) {
+                  handleSelectTo$(actualRowIndex);
+                } else {
+                  handleSelectRow$(actualRowIndex);
                 }
-                handleSelectRow$(actualRowIndex);
               }}
               onContextMenu$={async () => {
                 if (selectedRows.value.length === 0) {
                   await handleSelectRow$(actualRowIndex);
                 }
 
+                if (!selectedRows.value.includes(actualRowIndex)) return;
+
                 nextTick(() => {
                   document
                     .getElementById(`delete-row-${actualRowIndex}-panel`)
                     ?.showPopover();
-                }, 100);
+                }, 200);
               }}
             >
               <Popover.Root
-                gutter={20}
-                floating="right"
+                gutter={10}
+                floating="top-end"
                 id={`delete-row-${actualRowIndex}`}
               >
                 <Popover.Trigger class="pointer-events-none">
                   {actualRowIndex + 1}
                 </Popover.Trigger>
 
-                <Popover.Panel class="p-1" stoppropagation:click>
+                <Popover.Panel
+                  class="shadow-none p-0 w-fit bg-transparent border-none"
+                  stoppropagation:click
+                >
                   <Button
                     look="ghost"
                     onClick$={() => handleDeleteClick$(actualRowIndex)}
-                    class="w-full hover:bg-neutral-200 hover:border-neutral-500 p-2"
+                    class="w-fit p-1 rounded-md border bg-white"
                   >
-                    <LuTrash class="mr-2" />
-                    Delete
+                    <div class="hover:bg-neutral-100 p-1 rounded-sm flex justify-start items-center">
+                      <LuTrash class="text-neutral mr-1" />
+                      Delete {selectedRows.value.length > 1 ? 'rows' : 'row'}
+                    </div>
                   </Button>
                 </Popover.Panel>
               </Popover.Root>
