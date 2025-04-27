@@ -73,6 +73,9 @@ export const default_embedding_model = {
   provider: process.env.EMBEDDING_MODEL_PROVIDER ?? 'sambanova',
   model: process.env.EMBEDDING_MODEL ?? 'intfloat/e5-mistral-7b-instruct',
   embedding_dim: Number(process.env.EMBEDDING_DIM ?? 4096),
+  is_instruct: process.env.EMBEDDING_IS_INSTRUCT
+    ? process.env.EMBEDDING_IS_INSTRUCT === 'true'
+    : true,
 } as const;
 
 const RUNTIME_ENV = join(DATA_DIR, process.env.NODE_ENV ?? 'development');
