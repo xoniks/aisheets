@@ -253,8 +253,6 @@ async function createDatasetWithColumns(
           const refIndex = columnNames.indexOf(ref);
           return createdColumns[refIndex].id;
         }),
-        offset: 0,
-        limit: 5,
       },
       column: { id: createdColumn.id },
     });

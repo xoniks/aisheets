@@ -107,8 +107,7 @@ export const ExecutionForm = component$<SidebarProps>(
 
       inputModelId.value = process.modelName;
 
-      rowsToGenerate.value =
-        mode.value === 'add' ? '1' : process!.limit.toString();
+      rowsToGenerate.value = '1';
     });
 
     useVisibleTask$(async ({ track }) => {
