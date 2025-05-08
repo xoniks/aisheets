@@ -1,7 +1,7 @@
 import { featureExtraction } from '@huggingface/inference';
 import * as lancedb from '@lancedb/lancedb';
 import * as arrow from 'apache-arrow';
-import { VECTOR_DB_DIR, default_embedding_model } from '~/config';
+import { DEFAULT_EMBEDDING_MODEL, VECTOR_DB_DIR } from '~/config';
 import {
   normalizeFeatureExtractionArgs,
   normalizeOptions,
@@ -20,7 +20,7 @@ export const configureEmbeddingsIndex = async () => {
     new arrow.Field(
       'embedding',
       new arrow.FixedSizeList(
-        default_embedding_model.embedding_dim,
+        DEFAULT_EMBEDDING_MODEL.embeddingDim,
         new arrow.Field('item', new arrow.Float32(), true),
       ),
     ),
@@ -64,19 +64,19 @@ export const embedder = async (
   if (texts.length === 0) return [];
 
   const processedTexts =
-    options.isQuery && default_embedding_model.is_instruct
+    options.isQuery && DEFAULT_EMBEDDING_MODEL.isInstruct
       ? texts.map(getDetailedInstruct)
       : texts;
 
-  const timeout = 3000;
   const results = await featureExtraction(
     normalizeFeatureExtractionArgs({
       inputs: processedTexts,
       accessToken: options.accessToken,
-      modelName: default_embedding_model.model,
-      modelProvider: default_embedding_model.provider,
+      modelName: DEFAULT_EMBEDDING_MODEL.model,
+      modelProvider: DEFAULT_EMBEDDING_MODEL.provider,
+      endpointUrl: DEFAULT_EMBEDDING_MODEL.endpointUrl,
     }),
-    normalizeOptions(timeout),
+    normalizeOptions(),
   );
 
   if (!Array.isArray(results)) {
@@ -113,16 +113,15 @@ export const indexDatasetSources = async ({
     })
     .filter(({ chunks }) => chunks.length > 0);
 
-  let rows: Record<string, any>[] = chunkedSources
-    .flatMap(({ source, chunks }) => {
+  let rows: Record<string, any>[] = chunkedSources.flatMap(
+    ({ source, chunks }) => {
       return chunks.map((text) => ({
         text,
         source_uri: source.url,
         dataset_id: dataset.id,
       }));
-    })
-    .sort(() => Math.random() - 0.5) // Randomize the order of rows
-    .slice(0, 30); // Limit to 30 rows;
+    },
+  );
 
   const processEmbeddingsBatch = async (
     batch: Record<string, any>[],
@@ -159,13 +158,20 @@ export const indexDatasetSources = async ({
   };
 
   const chunkSize = 2;
-  const rowsWithEmbeddings = [];
+  const promises = [];
   for (let i = 0; i < rows.length; i += chunkSize) {
     const batch = rows.slice(i, i + chunkSize);
-    const processedBatch = await processEmbeddingsBatch(batch, i / chunkSize);
-    rowsWithEmbeddings.push(...processedBatch);
+    promises.push(processEmbeddingsBatch(batch, i / chunkSize));
   }
 
+  const rowsWithEmbeddings = [];
+  const parallelRequests = 10; // Number of parallel requests
+  for (let i = 0; i < promises.length; i += parallelRequests) {
+    const batchPromises = promises.slice(i, i + parallelRequests);
+    const batchResults = await Promise.all(batchPromises);
+
+    rowsWithEmbeddings.push(...batchResults.flat());
+  }
   rows = rowsWithEmbeddings;
 
   if (rows.length > 0) await embeddingsIndex.add(rows);
