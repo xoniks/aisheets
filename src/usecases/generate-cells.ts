@@ -332,8 +332,8 @@ async function* generateCellsFromColumnsReferences({
     if (response.done || !cell.value) {
       cell.generating = false;
       await updateCell(cell);
-    }
 
-    yield { cell };
+      yield { cell };
+    }
   }
 }
