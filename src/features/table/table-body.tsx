@@ -17,6 +17,7 @@ import { LuTrash } from '@qwikest/icons/lucide';
 import type { VirtualItem } from '@tanstack/virtual-core';
 import { Button, Popover } from '~/components';
 import { nextTick } from '~/components/hooks/tick';
+import { Tooltip } from '~/components/ui/tooltip/tooltip';
 import { VirtualScrollContainer } from '~/components/ui/virtual-scroll/virtual-scroll';
 import { useExecution } from '~/features/add-column';
 import { useGenerateColumn } from '~/features/execution';
@@ -138,6 +139,22 @@ export const TableBody = component$(() => {
     selectedCellsId.value = [cell];
   });
 
+  const firstColumnsWithValue = useComputed$(() => {
+    return firstColumn.value.cells.filter((c) => !!c.value || !!c.error);
+  });
+
+  useVisibleTask$(() => {
+    if (firstColumnsWithValue.value.length > 5) return;
+
+    const cell =
+      firstColumnsWithValue.value[firstColumnsWithValue.value.length - 1];
+
+    if (!cell.id) return;
+
+    dragStartCell.value = cell;
+    selectedCellsId.value = [cell];
+  });
+
   const handleMouseOver$ = $((cell: Cell, e: MouseEvent) => {
     if (e.buttons !== 1 /* Primary button not pressed */) return;
 
@@ -151,7 +168,7 @@ export const TableBody = component$(() => {
     const start = Math.min(startRowIndex, endRowIndex);
     const end = Math.max(startRowIndex, endRowIndex);
 
-    if (end + 1 > firstColumn.value.cells.length && !isDraggingTheFirstColumn) {
+    if (end > firstColumnsWithValue.value.length && !isDraggingTheFirstColumn) {
       return;
     }
 
@@ -316,7 +333,7 @@ export const TableBody = component$(() => {
           'border-b-2 border-b-primary-300': isRowMaxSelected,
           'border-l-2 border-l-primary-300': isColumnSelected,
           'border-r-2 border-r-primary-300': isColumnSelected,
-          'bg-primary-100/50':
+          'bg-primary-100/50 hover:bg-primary-100/50':
             !dragStartCell.value &&
             selectedCellsId.value.length > 1 &&
             isColumnSelected,
@@ -329,16 +346,14 @@ export const TableBody = component$(() => {
             'bg-gray-50/50 hover:bg-gray-50/50': selectedRows.value.includes(
               item.index,
             ),
-            '!transform-none': selectedCellsId.value.some(
-              (c) => c.idx === item.index,
-            ),
           })}
+          data-index={item.index}
           {...props}
         >
           <td
             class={cn(
-              'sticky left-0 z-30',
-              'px-2 text-center border bg-neutral-100 select-none',
+              'sticky left-0 z-30 w-10 text-sm',
+              'px-1 text-center border bg-neutral-100 select-none',
               {
                 'bg-neutral-200': selectedRows.value.includes(item.index),
               },
@@ -396,7 +411,7 @@ export const TableBody = component$(() => {
             return (
               <Fragment key={`${cell.idx}-${cell.column!.id}`}>
                 {cell.column?.id === TEMPORAL_ID ? (
-                  <td class="min-w-80 w-80 max-w-80 px-2 min-h-[100px] h-[100px] border" />
+                  <td class="relative min-w-[326px] w-[326px] max-w-[326px] h-[108px] border" />
                 ) : (
                   <td
                     class={cn(
@@ -431,7 +446,13 @@ export const TableBody = component$(() => {
                                   handleMouseDragging$(cell, e)
                                 }
                               >
-                                <LuDot class="text-5xl text-primary-300" />
+                                <Tooltip
+                                  text="Drag and fill to expand column"
+                                  gutter={1}
+                                  floating="right-start"
+                                >
+                                  <LuDot class="text-5xl text-primary-300" />
+                                </Tooltip>
                               </Button>
                             )}
                           </div>
@@ -462,7 +483,12 @@ export const TableBody = component$(() => {
   if (!scrollElement.value) return null;
 
   return (
-    <tbody>
+    <tbody
+      class="grid relative"
+      style={{
+        height: `${1000 * 108}px`,
+      }}
+    >
       <VirtualScrollContainer
         totalCount={1000}
         buffer={3}

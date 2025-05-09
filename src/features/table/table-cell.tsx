@@ -10,6 +10,7 @@ import { cn } from '@qwik-ui/utils';
 import { LuThumbsUp } from '@qwikest/icons/lucide';
 import { Button, Skeleton, Textarea } from '~/components';
 import { useClickOutside } from '~/components/hooks/click/outside';
+import { Tooltip } from '~/components/ui/tooltip/tooltip';
 import { getColumnCellById } from '~/services';
 import { type Cell, type Column, useColumnsStore } from '~/state';
 import { useValidateCellUseCase } from '~/usecases/validate-cell.usecase';
@@ -407,12 +408,13 @@ export const TableCell = component$<{
                   hover={false}
                   size="sm"
                   class={cn(
-                    'absolute z-10 text-base top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity',
+                    'absolute z-10 text-base top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity visible',
                     {
                       'bg-green-50/50 text-green-400 hover:bg-green-100':
                         cell.validated,
                       'hover:bg-gray-100 text-gray-400': !cell.validated,
                       '!opacity-0': !cell.id,
+                      hidden: !cell.value,
                     },
                   )}
                   onClick$={(e) => {
@@ -420,7 +422,12 @@ export const TableCell = component$<{
                     onValidateCell(originalValue.value, !cell.validated);
                   }}
                 >
-                  <LuThumbsUp class="text-sm" />
+                  <Tooltip
+                    text="Keep this content as an example. The system will use your feedback to regenerate related cells."
+                    class="break-words w-48 text-left"
+                  >
+                    <LuThumbsUp class="text-sm" />
+                  </Tooltip>
                 </Button>
               )}
               <div class="h-full mt-2 p-4">
@@ -442,10 +449,10 @@ export const TableCell = component$<{
           {isEditing.value && (
             <>
               {/* Backdrop */}
-              <div class="fixed inset-0 bg-neutral-700/40 z-40" />
+              <div class="fixed inset-0 bg-neutral-700/40 z-50" />
 
               <div
-                class="fixed z-40 bg-white border border-neutral-500 shadow-sm"
+                class="fixed z-[100] bg-white border border-neutral-500 shadow-sm"
                 style={{
                   left: '50%',
                   top: '50%',
