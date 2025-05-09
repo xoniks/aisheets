@@ -66,7 +66,7 @@ export const generateCells = async function* ({
   updateOnly = false,
   timeout,
 }: GenerateCellsParams) {
-  const { columnsReferences, modelName, modelProvider, prompt } = process;
+  const { columnsReferences } = process;
 
   if (!limit) limit = (await getMaxRowIdxByColumnId(column.id)) + 1;
   if (!offset) offset = 0;
@@ -75,9 +75,7 @@ export const generateCells = async function* ({
     if (!columnsReferences?.length) {
       yield* generateCellsFromScratch({
         column,
-        prompt,
-        modelName,
-        modelProvider,
+        process,
         validatedCells,
         offset,
         limit,
@@ -89,11 +87,8 @@ export const generateCells = async function* ({
     } else {
       yield* generateCellsFromColumnsReferences({
         column,
-        prompt,
-        modelName,
-        modelProvider,
+        process,
         validatedCells,
-        columnsReferences,
         offset,
         limit,
         updateOnly,
@@ -108,26 +103,9 @@ export const generateCells = async function* ({
   }
 };
 
-const getOrCreateCellInDB = async (
-  columnId: string,
-  idx: number,
-): Promise<Cell> => {
-  let cell = await getColumnCellByIdx({ idx, columnId });
-
-  if (!cell?.id) {
-    cell = await createCell({
-      cell: { idx },
-      columnId,
-    });
-  }
-
-  return cell;
-};
 async function* generateCellsFromScratch({
   column,
-  prompt,
-  modelName,
-  modelProvider,
+  process,
   validatedCells,
   offset,
   limit,
@@ -137,9 +115,7 @@ async function* generateCellsFromScratch({
   session,
 }: {
   column: Column;
-  prompt: string;
-  modelName: string;
-  modelProvider: string;
+  process: Process;
   validatedCells: Cell[];
   offset: number;
   limit: number;
@@ -148,13 +124,17 @@ async function* generateCellsFromScratch({
   timeout: number | undefined;
   session: Session;
 }) {
-  const sourcesContext = await queryDatasetSources({
-    dataset: column.dataset,
-    query: prompt,
-    options: {
-      accessToken: session.token,
-    },
-  });
+  const { modelName, modelProvider, prompt, searchEnabled } = process;
+
+  const sourcesContext = searchEnabled
+    ? await queryDatasetSources({
+        dataset: column.dataset,
+        query: prompt,
+        options: {
+          accessToken: session.token,
+        },
+      })
+    : undefined;
 
   // Sequential execution for fromScratch to accumulate examples
   // Get all existing cells in the column to achieve diversity
@@ -220,12 +200,10 @@ async function* generateCellsFromScratch({
     }
   }
 }
+
 async function* generateCellsFromColumnsReferences({
   column,
-  prompt,
-  modelName,
-  modelProvider,
-  columnsReferences,
+  process,
   validatedCells,
   offset,
   limit,
@@ -234,17 +212,17 @@ async function* generateCellsFromColumnsReferences({
   session,
 }: {
   column: Column;
-  prompt: string;
-  modelName: string;
-  modelProvider: string;
-  columnsReferences: string[];
-  validatedCells?: Cell[];
+  process: Process;
+  validatedCells: Cell[];
   offset: number;
   limit: number;
   updateOnly: boolean;
   timeout: number | undefined;
   session: Session;
 }) {
+  const { columnsReferences, modelName, modelProvider, prompt, searchEnabled } =
+    process;
+
   const streamRequests: PromptExecutionParams[] = [];
   const cells = new Map<number, Cell>();
 
@@ -265,17 +243,6 @@ async function* generateCellsFromColumnsReferences({
 
     if (!cell) continue;
 
-    const args: PromptExecutionParams = {
-      accessToken: session.token,
-      modelName,
-      modelProvider,
-      examples: currentExamples,
-      instruction: prompt,
-      timeout,
-      data: {},
-      idx: i,
-    };
-
     const rowCells = await getRowCells({
       rowIdx: i,
       columns: columnsReferences,
@@ -291,17 +258,30 @@ async function* generateCellsFromColumnsReferences({
       continue;
     }
 
-    args.data = Object.fromEntries(
+    const data = Object.fromEntries(
       rowCells.map((cell) => [cell.column!.name, cell.value]),
     );
 
-    args.sourcesContext = await queryDatasetSources({
-      dataset: column.dataset,
-      query: renderInstruction(prompt, args.data),
-      options: {
-        accessToken: session.token,
-      },
-    });
+    const args: PromptExecutionParams = {
+      accessToken: session.token,
+      modelName,
+      modelProvider,
+      examples: currentExamples,
+      instruction: prompt,
+      timeout,
+      data,
+      idx: i,
+    };
+
+    if (searchEnabled) {
+      args.sourcesContext = await queryDatasetSources({
+        dataset: column.dataset,
+        query: renderInstruction(prompt, args.data),
+        options: {
+          accessToken: session.token,
+        },
+      });
+    }
 
     cell.generating = true;
     cells.set(i, cell);
@@ -337,3 +317,19 @@ async function* generateCellsFromColumnsReferences({
     }
   }
 }
+
+const getOrCreateCellInDB = async (
+  columnId: string,
+  idx: number,
+): Promise<Cell> => {
+  let cell = await getColumnCellByIdx({ idx, columnId });
+
+  if (!cell?.id) {
+    cell = await createCell({
+      cell: { idx },
+      columnId,
+    });
+  }
+
+  return cell;
+};
