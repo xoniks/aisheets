@@ -59,6 +59,8 @@ export const configureEmbeddingsIndex = async () => {
   // Check if the database is empty
   const db = await lancedb.connect(VECTOR_DB_DIR);
 
+  const { embeddingDim } = DEFAULT_EMBEDDING_MODEL;
+
   const schema = new arrow.Schema([
     new arrow.Field('dataset_id', new arrow.Utf8()),
     new arrow.Field('source_uri', new arrow.Utf8()),
@@ -66,16 +68,20 @@ export const configureEmbeddingsIndex = async () => {
     new arrow.Field(
       'embedding',
       new arrow.FixedSizeList(
-        DEFAULT_EMBEDDING_MODEL.embeddingDim,
+        embeddingDim,
         new arrow.Field('item', new arrow.Float32(), true),
       ),
     ),
   ]);
 
-  const embeddingsIndex = await db.createEmptyTable('embeddings', schema, {
-    existOk: true,
-    mode: 'create',
-  });
+  const embeddingsIndex = await db.createEmptyTable(
+    `embeddings-${embeddingDim}`,
+    schema,
+    {
+      existOk: true,
+      mode: 'create',
+    },
+  );
 
   // Create both vector and FTS indices
   await embeddingsIndex.createIndex('dataset_id', { replace: true });
@@ -127,6 +133,7 @@ export const indexDatasetSources = async ({
   dataset,
   sources,
   options,
+  maxChunks = 100, // Default to 100 chunks to prevent long processing times
 }: {
   dataset: {
     id: string;
@@ -136,6 +143,7 @@ export const indexDatasetSources = async ({
   options: {
     accessToken: string;
   };
+  maxChunks?: number; // Optional parameter to limit total chunks
 }): Promise<number> => {
   const chunkedSources = sources
     .map((source) => {
@@ -159,6 +167,14 @@ export const indexDatasetSources = async ({
       }));
     },
   );
+
+  // Limit the total number of chunks if maxChunks is specified
+  if (maxChunks && rows.length > maxChunks) {
+    console.log(
+      `[indexDatasetSources] Limiting chunks from ${rows.length} to ${maxChunks} for dataset ${dataset.name}`,
+    );
+    rows = rows.slice(0, maxChunks);
+  }
 
   const processEmbeddingsBatch = async (
     batch: Record<string, any>[],
@@ -285,5 +301,28 @@ export const queryDatasetSources = async ({
   } catch (error) {
     console.error('Error querying dataset sources:', error);
     return [];
+  }
+};
+
+export const checkSourceExists = async ({
+  dataset,
+  sourceUri,
+}: {
+  dataset: {
+    id: string;
+  };
+  sourceUri: string;
+}): Promise<boolean> => {
+  try {
+    // Escape quotes in sourceUri to prevent SQL injection
+    const escapedSourceUri = sourceUri.replace(/"/g, '\\"');
+    const filterByDatasetAndSource = `dataset_id = "${dataset.id}" AND source_uri = "${escapedSourceUri}"`;
+    const count = await embeddingsIndex.countRows(filterByDatasetAndSource);
+    return count > 0;
+  } catch (error) {
+    console.error('Error checking if source exists:', error);
+    // If there's an error checking, we should assume the source doesn't exist
+    // This is safer than assuming it does exist and skipping it
+    return false;
   }
 };

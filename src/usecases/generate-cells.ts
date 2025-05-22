@@ -1,13 +1,19 @@
-import { NUM_CONCURRENT_REQUESTS } from '~/config';
+import { chatCompletion } from '@huggingface/inference';
+import {
+  DEFAULT_MODEL,
+  DEFAULT_MODEL_PROVIDER,
+  NUM_CONCURRENT_REQUESTS,
+} from '~/config';
 import { getDatasetColumns, updateProcess } from '~/services';
 import { MAX_SOURCE_SNIPPET_LENGTH } from '~/services/db/models/cell';
 import { renderInstruction } from '~/services/inference/materialize-prompt';
 import type { MaterializePromptParams } from '~/services/inference/materialize-prompt';
 import {
   type PromptExecutionParams,
+  normalizeChatCompletionArgs,
+  normalizeOptions,
   runPromptExecution,
   runPromptExecutionStream,
-  runPromptExecutionStreamBatch,
 } from '~/services/inference/run-prompt-execution';
 import {
   createCell,
@@ -17,8 +23,8 @@ import {
 } from '~/services/repository/cells';
 import { countDatasetTableRows } from '~/services/repository/tables';
 import { queryDatasetSources } from '~/services/websearch/embed';
-import type { Cell, CellSource, Column, Process, Session } from '~/state';
-import { collectValidatedExamples } from './collect-examples';
+import { createSourcesFromWebQueries } from '~/services/websearch/search-sources';
+import type { Cell, Column, Process, Session } from '~/state';
 
 export interface GenerateCellsParams {
   column: Column;
@@ -32,7 +38,7 @@ export interface GenerateCellsParams {
   timeout?: number;
 }
 
-const MAX_CONCURRENCY = Math.min(NUM_CONCURRENT_REQUESTS, 8);
+const MAX_CONCURRENCY = NUM_CONCURRENT_REQUESTS;
 
 /**
  * Generates cells for a given column based on the provided parameters.
@@ -108,25 +114,19 @@ export const generateCells = async function* ({
         session,
       });
     } else {
-      let remaining = limit;
-      for (let i = offset; i < offset + limit; i += MAX_CONCURRENCY) {
-        yield* generateCellsFromColumnsReferences({
-          column,
-          process,
-          validatedCells,
-          offset: i,
-          limit: Math.min(MAX_CONCURRENCY, remaining),
-          updateOnly,
-          timeout,
-          session,
-        });
-
-        remaining -= MAX_CONCURRENCY;
-      }
+      yield* generateCellsFromColumnsReferences({
+        column,
+        process,
+        validatedCells,
+        offset,
+        limit,
+        updateOnly,
+        timeout,
+        session,
+      });
     }
   } finally {
     process.updatedAt = new Date();
-
     await updateProcess(process);
   }
 };
@@ -154,15 +154,39 @@ async function* generateCellsFromScratch({
 }) {
   const { modelName, modelProvider, prompt, searchEnabled } = process;
 
-  const sourcesContext = searchEnabled
-    ? await queryDatasetSources({
+  let sourcesContext = undefined;
+  if (searchEnabled) {
+    // 1. Build web search query from prompt
+    const queries = await buildWebSearchQueries({
+      prompt,
+      column,
+      options: {
+        accessToken: session.token,
+      },
+      maxQueries: 1,
+    });
+
+    // 2. Index web search results into the embbedding store
+    if (queries.length > 0) {
+      await createSourcesFromWebQueries({
         dataset: column.dataset,
-        query: prompt,
+        queries,
         options: {
           accessToken: session.token,
         },
-      })
-    : undefined;
+        maxSources: 2,
+      });
+    }
+
+    // 3. Search for relevant results
+    sourcesContext = await queryDatasetSources({
+      dataset: column.dataset,
+      query: prompt,
+      options: {
+        accessToken: session.token,
+      },
+    });
+  }
 
   // Extract sources (url + snippet) if available
   const sources = sourcesContext
@@ -239,6 +263,163 @@ async function* generateCellsFromScratch({
   }
 }
 
+async function singleCellGeneration({
+  cell,
+  column,
+  process,
+  rowIdx,
+  session,
+  timeout,
+}: {
+  cell: Cell;
+  column: Column;
+  process: Process;
+  rowIdx: number;
+  session: Session;
+  timeout: number | undefined;
+}): Promise<{
+  cell: Cell;
+}> {
+  const { columnsReferences, modelName, modelProvider, prompt, searchEnabled } =
+    process;
+
+  const rowCells = await getRowCells({
+    rowIdx,
+    columns: columnsReferences,
+  });
+
+  if (rowCells?.filter((cell) => cell.value).length === 0) {
+    cell.generating = false;
+    cell.error = 'No input data found';
+
+    await updateCell(cell);
+
+    return { cell };
+  }
+
+  const data = Object.fromEntries(
+    rowCells.map((cell) => [cell.column!.name, cell.value]),
+  );
+
+  const args: PromptExecutionParams = {
+    accessToken: session.token,
+    modelName,
+    modelProvider,
+    examples: [],
+    instruction: prompt,
+    timeout,
+    data,
+    idx: rowIdx,
+  };
+
+  let sourcesContext: MaterializePromptParams['sourcesContext'];
+
+  if (searchEnabled) {
+    const renderedInstruction = renderInstruction(prompt, args.data);
+
+    const queries = await buildWebSearchQueries({
+      prompt: renderedInstruction,
+      column,
+      options: {
+        accessToken: session.token,
+      },
+      maxQueries: 1,
+    });
+
+    if (queries.length > 0) {
+      // 2. Index web search results into the embbedding store
+      await createSourcesFromWebQueries({
+        dataset: column.dataset,
+        queries,
+        options: {
+          accessToken: session.token,
+        },
+        maxSources: 2,
+      });
+    }
+
+    // 3. Search for relevant results
+    sourcesContext = await queryDatasetSources({
+      dataset: column.dataset,
+      query: renderedInstruction,
+      options: {
+        accessToken: session.token,
+      },
+    });
+    args.sourcesContext = sourcesContext;
+  }
+
+  // Extract sources (url + snippet) if available
+  const sources = sourcesContext
+    ? sourcesContext.map((source) => ({
+        url: source.source_uri,
+        snippet: source.text?.slice(0, MAX_SOURCE_SNIPPET_LENGTH) || '',
+      }))
+    : undefined;
+
+  const response = await runPromptExecution(args);
+
+  cell.value = response.value;
+  cell.error = response.error;
+
+  cell.generating = false;
+  if (cell.value && !cell.error) cell.sources = sources;
+  await updateCell(cell);
+
+  return { cell };
+}
+
+async function* cellGenerationInBatch({
+  cells,
+  column,
+  process,
+  session,
+  timeout,
+}: {
+  cells: Cell[];
+  column: Column;
+  process: Process;
+  session: Session;
+  timeout: number | undefined;
+}) {
+  for (let i = 0; i < cells.length; i += MAX_CONCURRENCY) {
+    const batch = cells.slice(i, i + MAX_CONCURRENCY);
+
+    for (const cell of batch) {
+      cell.generating = true;
+      yield { cell };
+    }
+
+    // Prepare an array of promises, each with its cell index
+    const pending = batch.map((cell, idx) =>
+      singleCellGeneration({
+        cell,
+        column,
+        process,
+        rowIdx: cell.idx,
+        session,
+        timeout,
+      }).then((result) => ({ result, idx })),
+    );
+
+    // As soon as a promise resolves, yield its result and replace it with the
+    // next pending one (if any)
+    let remaining = pending.length;
+    const yielded = new Set<number>();
+
+    while (remaining > 0) {
+      const { result, idx } = await Promise.race(
+        pending.filter((_, i) => !yielded.has(i)),
+      );
+
+      yielded.add(idx);
+
+      yield { cell: result.cell };
+      remaining--;
+    }
+  }
+}
+
 async function* generateCellsFromColumnsReferences({
   column,
   process,
@@ -258,23 +439,10 @@ async function* generateCellsFromColumnsReferences({
   timeout: number | undefined;
   session: Session;
 }) {
-  const { columnsReferences, modelName, modelProvider, prompt, searchEnabled } =
-    process;
-
-  const streamRequests: PromptExecutionParams[] = [];
-  const cells = new Map<
-    number,
-    { cell: Cell; sources: CellSource[] | undefined }
-  >();
-
-  // Get initial examples from validated cells
-  const currentExamples = await collectValidatedExamples({
-    validatedCells,
-    columnsReferences,
-  });
-
+  // Set generating state for all cells upfront
+  const cellsToGenerate = [];
   const validatedIdxs = validatedCells?.map((cell) => cell.idx);
-  // Create all cells and requests in order
+
   for (let i = offset; i < limit + offset; i++) {
     if (validatedIdxs?.includes(i)) continue;
 
@@ -284,91 +452,17 @@ async function* generateCellsFromColumnsReferences({
 
     if (!cell) continue;
 
-    const rowCells = await getRowCells({
-      rowIdx: i,
-      columns: columnsReferences,
-    });
-
-    if (rowCells?.filter((cell) => cell.value).length === 0) {
-      cell.generating = false;
-      cell.error = 'No input data found';
-
-      await updateCell(cell);
-
-      yield { cell };
-      continue;
-    }
-
-    const data = Object.fromEntries(
-      rowCells.map((cell) => [cell.column!.name, cell.value]),
-    );
-
-    const args: PromptExecutionParams = {
-      accessToken: session.token,
-      modelName,
-      modelProvider,
-      examples: currentExamples,
-      instruction: prompt,
-      timeout,
-      data,
-      idx: i,
-    };
-
-    let sourcesContext: MaterializePromptParams['sourcesContext'];
-    if (searchEnabled) {
-      sourcesContext = await queryDatasetSources({
-        dataset: column.dataset,
-        query: renderInstruction(prompt, args.data),
-        options: {
-          accessToken: session.token,
-        },
-      });
-      args.sourcesContext = sourcesContext;
-    }
-
-    // Extract sources (url + snippet) if available
-    const sources = sourcesContext
-      ? sourcesContext.map((source) => ({
-          url: source.source_uri,
-          snippet: source.text?.slice(0, MAX_SOURCE_SNIPPET_LENGTH) || '',
-        }))
-      : undefined;
-
-    cell.generating = true;
-
-    cells.set(i, { cell, sources });
-
-    streamRequests.push(args);
+    cellsToGenerate.push(cell);
   }
 
-  // Initial yield of empty cells in order
-  const orderedIndices = Array.from(cells.keys()).sort((a, b) => a - b);
-  for (const idx of orderedIndices) {
-    const cell = cells.get(idx)?.cell;
-    if (cell) yield { cell };
-  }
-
-  // Process responses in order
-  for await (const { idx, response } of runPromptExecutionStreamBatch(
-    streamRequests,
-  )) {
-    if (idx === undefined) continue;
-
-    const cellData = cells.get(idx);
-    if (!cellData) continue;
-
-    const { cell, sources } = cellData;
-    // Update cell with response
-    cell.value = response.value || '';
-    cell.error = response.error;
-
-    if (response.done || !cell.value) {
-      if (cell.value && !cell.error) cell.sources = sources;
-      cell.generating = false;
-      await updateCell(cell);
-
-      yield { cell };
-    }
+  for await (const { cell } of cellGenerationInBatch({
+    cells: cellsToGenerate,
+    column,
+    process,
+    session,
+    timeout,
+  })) {
+    yield { cell };
   }
 }
 
@@ -387,3 +481,80 @@ const getOrCreateCellInDB = async (
 
   return cell;
 };
+
+const SEARCH_QUERIES_PROMPT_TEMPLATE = `
+Given this prompt that will be used to generate a cell in a column of the dataset named "{datasetName}":
+
+{prompt}
+
+Create exactly {maxQueries} specific optimized Google search queries that will help gather relevant, accurate, and specific information for this prompt. The queries should be focused on finding information that would help generate high-quality content for this specific cell, taking into account the context of the dataset.
+
+Your response must follow this exact format:
+
+SEARCH QUERIES:
+- "specific search query 1"
+- "specific search query 2"
+
+Make sure the queries are specific and relevant to both the prompt and the dataset context. Avoid generic queries.
+`.trim();
+
+async function buildWebSearchQueries({
+  prompt,
+  column,
+  options,
+  maxQueries = 1,
+}: {
+  prompt: string;
+  column: Column;
+  options: { accessToken: string };
+  maxQueries?: number;
+}): Promise<string[]> {
+  const { modelName = DEFAULT_MODEL, modelProvider = DEFAULT_MODEL_PROVIDER } =
+    column.process || {};
+
+  try {
+    const promptText = SEARCH_QUERIES_PROMPT_TEMPLATE.replace(
+      '{prompt}',
+      prompt,
+    )
+      .replace('{maxQueries}', maxQueries.toString())
+      .replace('{datasetName}', column.dataset.name);
+
+    const response = await chatCompletion(
+      normalizeChatCompletionArgs({
+        messages: [{ role: 'user', content: promptText }],
+        modelName,
+        modelProvider,
+        accessToken: options.accessToken,
+      }),
+      normalizeOptions(),
+    );
+
+    const responseText = response.choices[0].message.content || '';
+
+    // Extract queries using regex similar to extractDatasetConfig
+    const queries: string[] = [];
+    const regex = /^["'](.+)["']$/;
+
+    // Process all lines to extract queries
+    for (const line of responseText.split('\n').map((l) => l.trim())) {
+      if (line.startsWith('-')) {
+        const item = line.substring(1).trim();
+        const quotedMatch = item.match(regex);
+        const query = quotedMatch ? quotedMatch[1] : item;
+        if (query) {
+          queries.push(query);
+        }
+      }
+    }
+
+    // Return only up to maxQueries queries, regardless of how many the model returned
+    return queries.slice(0, maxQueries);
+  } catch (error) {
+    console.error(
+      '❌ [buildWebSearchQueries] Error generating search queries:',
+      error,
+    );
+    return [];
+  }
+}

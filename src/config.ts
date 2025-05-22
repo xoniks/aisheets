@@ -42,9 +42,15 @@ export const INFERENCE_TIMEOUT = 90000;
  *
  * This constant defines the number of concurrent requests to be sent to the endpoint while generating cells
  *
- * Default value: 4, max. number of concurrent requests 8
+ * Default value: 4, max. number of concurrent requests
  */
-export const NUM_CONCURRENT_REQUESTS = 4;
+const DEFAULT_CONCURRENT_REQUESTS = 5;
+const DEFAULT_MAX_CONCURRENT_REQUESTS = 10;
+
+export const NUM_CONCURRENT_REQUESTS = Math.min(
+  Number(process.env.NUM_CONCURRENT_REQUESTS || DEFAULT_CONCURRENT_REQUESTS),
+  DEFAULT_MAX_CONCURRENT_REQUESTS,
+);
 
 /**
  * The Serper API key used for web searches.
@@ -197,7 +203,7 @@ export const ORG_BILLING = process.env.ORG_BILLING ?? undefined;
  */
 export const BLOCKED_URLS: string[] = process.env.BLOCKED_URLS?.split(',').map(
   (u) => u.trim(),
-) ?? ['youtube.com', 'twitter.com'];
+) ?? ['youtube.com', 'x.com', 'bloomberg.com', 'nytimes.com'];
 
 const RUNTIME_ENV = join(DATA_DIR, process.env.NODE_ENV ?? 'development');
 
