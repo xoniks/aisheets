@@ -1,4 +1,5 @@
 import {
+  type BaseArgs,
   type FeatureExtractionArgs,
   type InferenceProvider,
   type Options,
@@ -6,11 +7,12 @@ import {
   chatCompletionStream,
 } from '@huggingface/inference';
 
+import type { ChatCompletionInput } from '@huggingface/tasks';
+
 import { HF_TOKEN, INFERENCE_TIMEOUT, ORG_BILLING } from '~/config';
 import { type Example, materializePrompt } from './materialize-prompt';
 
 export interface PromptExecutionParams {
-  accessToken?: string;
   modelName: string;
   modelProvider: string;
   instruction: string;
@@ -20,9 +22,12 @@ export interface PromptExecutionParams {
   }[];
   data: Record<string, any>;
   examples?: Array<Example>;
-  stream?: boolean;
-  timeout?: number;
   idx?: number;
+  stream?: boolean;
+
+  timeout?: number;
+  accessToken?: string;
+  endpointUrl?: string;
 }
 
 export interface PromptExecutionResponse {
@@ -45,6 +50,7 @@ export const runPromptExecution = async ({
   data,
   examples,
   timeout,
+  endpointUrl,
 }: PromptExecutionParams): Promise<PromptExecutionResponse> => {
   const inputPrompt = materializePrompt({
     instruction,
@@ -57,6 +63,7 @@ export const runPromptExecution = async ({
     modelProvider,
     modelName,
     accessToken,
+    endpointUrl,
   });
   const options = normalizeOptions(timeout);
 
@@ -77,7 +84,6 @@ export const runPromptExecution = async ({
 };
 
 export const runPromptExecutionStream = async function* ({
-  accessToken,
   modelName,
   modelProvider,
   instruction,
@@ -85,6 +91,8 @@ export const runPromptExecutionStream = async function* ({
   data,
   examples,
   timeout,
+  accessToken,
+  endpointUrl,
 }: PromptExecutionParams): AsyncGenerator<PromptExecutionResponse> {
   const inputPrompt = materializePrompt({
     instruction,
@@ -97,6 +105,7 @@ export const runPromptExecutionStream = async function* ({
     modelProvider,
     modelName,
     accessToken,
+    endpointUrl,
   });
   const options = normalizeOptions(timeout);
 
@@ -154,17 +163,28 @@ export const normalizeChatCompletionArgs = ({
   modelName,
   modelProvider,
   accessToken,
+  endpointUrl,
 }: {
   messages: any[];
   modelName: string;
   modelProvider: string;
   accessToken?: string;
-}) => ({
-  messages,
-  model: modelName,
-  provider: modelProvider as InferenceProvider,
-  accessToken: HF_TOKEN ?? accessToken,
-});
+  endpointUrl?: string;
+}): BaseArgs & ChatCompletionInput => {
+  const args: BaseArgs & ChatCompletionInput = {
+    messages,
+    accessToken: HF_TOKEN ?? accessToken,
+  };
+
+  if (endpointUrl) {
+    args.endpointUrl = endpointUrl;
+  } else {
+    args.model = modelName;
+    args.provider = modelProvider as InferenceProvider;
+  }
+
+  return args;
+};
 
 export const normalizeOptions = (timeout?: number | undefined): Options => {
   const options: Record<string, any> = {

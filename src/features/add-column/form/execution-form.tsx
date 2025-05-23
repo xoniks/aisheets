@@ -8,6 +8,7 @@ import {
   useTask$,
   useVisibleTask$,
 } from '@builder.io/qwik';
+
 import { cn } from '@qwik-ui/utils';
 import {
   LuCheck,
@@ -15,10 +16,12 @@ import {
   LuGlobe,
   LuSettings,
   LuStopCircle,
+  LuUndo2,
   LuX,
 } from '@qwikest/icons/lucide';
 
 import { Button, Label, Select } from '~/components';
+import { Tooltip } from '~/components/ui/tooltip/tooltip';
 
 import {
   TemplateTextArea,
@@ -46,7 +49,12 @@ export const ExecutionForm = component$<SidebarProps>(
     const { firstColumn, columns, removeTemporalColumn, updateColumn } =
       useColumnsStore();
 
-    const { DEFAULT_MODEL, DEFAULT_MODEL_PROVIDER } = useContext(configContext);
+    const {
+      DEFAULT_MODEL,
+      DEFAULT_MODEL_PROVIDER,
+      modelEndpointEnabled,
+      MODEL_ENDPOINT_NAME,
+    } = useContext(configContext);
 
     const models = useContext(modelsContext);
 
@@ -59,6 +67,9 @@ export const ExecutionForm = component$<SidebarProps>(
 
     const selectedModel = useSignal<Model>();
     const selectedProvider = useSignal<string>();
+
+    const endpointURLSelected = useSignal(modelEndpointEnabled);
+
     const inputModelId = useSignal<string | undefined>();
 
     const onSelectedVariables = $((variables: { id: string }[]) => {
@@ -94,19 +105,15 @@ export const ExecutionForm = component$<SidebarProps>(
           providers: [process.modelProvider!],
         };
         selectedProvider.value = process.modelProvider!;
-      }
-      // Otherwise pre-select the default model
-      else if (models) {
-        const defaultModel = models.find((m: Model) => m.id === DEFAULT_MODEL);
+      } else {
+        const defaultModel = models?.find((m: Model) => m.id === DEFAULT_MODEL);
         if (defaultModel) {
+          const defaultProvider = defaultModel.providers.find(
+            (provider) => provider === DEFAULT_MODEL_PROVIDER,
+          );
+
           selectedModel.value = defaultModel;
-          selectedProvider.value =
-            defaultModel.providers.find(
-              (provider) => provider === DEFAULT_MODEL_PROVIDER,
-            ) || defaultModel.providers[0];
-        } else {
-          selectedModel.value = models[0];
-          selectedProvider.value = models[0].providers[0];
+          selectedProvider.value = defaultProvider || defaultModel.providers[0];
         }
       }
 
@@ -118,6 +125,7 @@ export const ExecutionForm = component$<SidebarProps>(
       track(selectedProvider);
       track(prompt);
       track(columnsReferences);
+      track(endpointURLSelected);
 
       updateColumn({
         ...column,
@@ -161,6 +169,7 @@ export const ExecutionForm = component$<SidebarProps>(
             ...column.process,
             modelName,
             modelProvider,
+            useEndpointURL: endpointURLSelected.value,
             prompt: prompt.value,
             columnsReferences: columnsReferences.value,
             searchEnabled: searchOnWeb.value,
@@ -255,18 +264,44 @@ export const ExecutionForm = component$<SidebarProps>(
               </div>
 
               <div class="flex items-center justify-start gap-1">
-                Model
-                <p class="text-neutral-500 underline">
-                  {selectedModel.value?.id}
-                </p>
-                with inference provider
-                <p class="italic">{selectedProvider.value}</p>
+                {endpointURLSelected.value ? (
+                  <div
+                    onClick$={() => (isOpenModel.value = !isOpenModel.value)}
+                    class="flex items-center justify-start gap-1 cursor-pointer"
+                  >
+                    Model
+                    <p class="text-neutral-500 underline">
+                      {MODEL_ENDPOINT_NAME}
+                    </p>
+                    with custom endpoint
+                  </div>
+                ) : (
+                  <div class="flex items-center justify-start gap-1">
+                    Model
+                    <p class="text-neutral-500 underline">
+                      {selectedModel.value?.id}
+                    </p>
+                    {modelEndpointEnabled && !endpointURLSelected.value && (
+                      <Tooltip text="Reset default model">
+                        <LuUndo2
+                          class="w-4 h-4 rounded-full gap-2 text-neutral-500 cursor-pointer hover:bg-neutral-200"
+                          onClick$={() => (endpointURLSelected.value = true)}
+                        />
+                      </Tooltip>
+                    )}
+                    with provider
+                    <p class="italic">{selectedProvider.value}</p>
+                  </div>
+                )}
+
                 <Button
+                  onClick$={() => (isOpenModel.value = !isOpenModel.value)}
                   look="ghost"
                   class="hover:bg-neutral-200"
-                  onClick$={() => (isOpenModel.value = true)}
                 >
-                  <LuSettings class="text-neutral-500" />
+                  <Tooltip text="edit configuration">
+                    <LuSettings class="text-neutral-500" />
+                  </Tooltip>
                 </Button>
               </div>
 
@@ -284,7 +319,12 @@ export const ExecutionForm = component$<SidebarProps>(
                   </div>
 
                   <div class="flex flex-col gap-4">
-                    <div class="flex gap-4">
+                    <div
+                      class="flex gap-4"
+                      onClick$={() => {
+                        endpointURLSelected.value = false;
+                      }}
+                    >
                       <div class="flex-[2]">
                         <Label class="flex gap-1 mb-2 font-normal">Model</Label>
                         <Select.Root value={selectedModel.value?.id}>

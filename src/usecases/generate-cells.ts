@@ -2,12 +2,16 @@ import { chatCompletion } from '@huggingface/inference';
 import {
   DEFAULT_MODEL,
   DEFAULT_MODEL_PROVIDER,
+  MODEL_ENDPOINT_URL,
   NUM_CONCURRENT_REQUESTS,
 } from '~/config';
 import { getDatasetColumns, updateProcess } from '~/services';
 import { MAX_SOURCE_SNIPPET_LENGTH } from '~/services/db/models/cell';
 import { renderInstruction } from '~/services/inference/materialize-prompt';
-import type { MaterializePromptParams } from '~/services/inference/materialize-prompt';
+import type {
+  Example,
+  MaterializePromptParams,
+} from '~/services/inference/materialize-prompt';
 import {
   type PromptExecutionParams,
   normalizeChatCompletionArgs,
@@ -25,6 +29,7 @@ import { countDatasetTableRows } from '~/services/repository/tables';
 import { queryDatasetSources } from '~/services/websearch/embed';
 import { createSourcesFromWebQueries } from '~/services/websearch/search-sources';
 import type { Cell, Column, Process, Session } from '~/state';
+import { collectValidatedExamples } from './collect-examples';
 
 export interface GenerateCellsParams {
   column: Column;
@@ -152,7 +157,8 @@ async function* generateCellsFromScratch({
   timeout: number | undefined;
   session: Session;
 }) {
-  const { modelName, modelProvider, prompt, searchEnabled } = process;
+  const { modelName, modelProvider, prompt, searchEnabled, useEndpointURL } =
+    process;
 
   let sourcesContext = undefined;
   if (searchEnabled) {
@@ -224,6 +230,8 @@ async function* generateCellsFromScratch({
       accessToken: session.token,
       modelName,
       modelProvider,
+      endpointUrl:
+        useEndpointURL && MODEL_ENDPOINT_URL ? MODEL_ENDPOINT_URL : undefined,
       examples: existingCellsExamples,
       instruction: prompt,
       sourcesContext,
@@ -267,6 +275,7 @@ async function singleCellGeneration({
   cell,
   column,
   process,
+  examples,
   rowIdx,
   session,
   timeout,
@@ -274,6 +283,7 @@ async function singleCellGeneration({
   cell: Cell;
   column: Column;
   process: Process;
+  examples?: Example[];
   rowIdx: number;
   session: Session;
   timeout: number | undefined;
@@ -305,7 +315,7 @@ async function singleCellGeneration({
     accessToken: session.token,
     modelName,
     modelProvider,
-    examples: [],
+    examples,
     instruction: prompt,
     timeout,
     data,
@@ -373,12 +383,14 @@ async function* cellGenerationInBatch({
   cells,
   column,
   process,
+  examples,
   session,
   timeout,
 }: {
   cells: Cell[];
   column: Column;
   process: Process;
+  examples?: Example[];
   session: Session;
   timeout: number | undefined;
 }) {
@@ -396,6 +408,7 @@ async function* cellGenerationInBatch({
         cell,
         column,
         process,
+        examples,
         rowIdx: cell.idx,
         session,
         timeout,
@@ -443,6 +456,12 @@ async function* generateCellsFromColumnsReferences({
   const cellsToGenerate = [];
   const validatedIdxs = validatedCells?.map((cell) => cell.idx);
 
+  // Get initial examples from validated cells
+  const currentExamples = await collectValidatedExamples({
+    validatedCells,
+    columnsReferences: process.columnsReferences,
+  });
+
   for (let i = offset; i < limit + offset; i++) {
     if (validatedIdxs?.includes(i)) continue;
 
@@ -458,6 +477,7 @@ async function* generateCellsFromColumnsReferences({
   for await (const { cell } of cellGenerationInBatch({
     cells: cellsToGenerate,
     column,
+    examples: currentExamples,
     process,
     session,
     timeout,

@@ -1,6 +1,10 @@
 import type { RequestEventBase } from '@builder.io/qwik-city';
 import { chatCompletion } from '@huggingface/inference';
-import { DEFAULT_MODEL, DEFAULT_MODEL_PROVIDER } from '~/config';
+import {
+  DEFAULT_MODEL,
+  DEFAULT_MODEL_PROVIDER,
+  MODEL_ENDPOINT_URL,
+} from '~/config';
 import {
   normalizeChatCompletionArgs,
   normalizeOptions,
@@ -180,6 +184,7 @@ async function extractDatasetConfig({
       modelName,
       modelProvider,
       accessToken: session.token,
+      endpointUrl: MODEL_ENDPOINT_URL,
     }),
     normalizeOptions(timeout),
   );
@@ -357,7 +362,10 @@ async function populateDataset(
 
       for await (const _ of generateCells({
         column,
-        process: column.process,
+        process: {
+          ...column.process,
+          useEndpointURL: MODEL_ENDPOINT_URL !== undefined,
+        },
         session,
         offset: 0,
         limit: 5,
