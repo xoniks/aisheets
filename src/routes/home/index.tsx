@@ -77,22 +77,21 @@ export default component$(() => {
     {
       title: 'Spanish-Speaking Countries & Regional Idioms',
       prompt:
-        'List of Spanish speaking countries with an example of a regional idiom',
+        'List of idioms in Spanish speaking countries, with the country where they are used',
     },
     {
       title: 'Climate-related disasters',
       prompt:
-        'Recent climate-related disasters worldwide. Include event and location, date, affected population, economic impact, and a detailed description of the event.',
+        'Recent climate related disasters with one column including the name/type of disaster, location and year',
     },
     {
       title: 'Endangered Plants',
-      prompt:
-        'Endangered plant species. Include scientific name, common name and habitat',
+      prompt: 'Endangered plant species. Include scientific name and habitat',
     },
     {
       title: 'Customer sentiment climbing shoes',
       prompt:
-        'Sentiment dataset about real climbing shoe models, including positive, negative, and neutral reviews',
+        'Sentiment dataset about real climbing shoe models, including a summary of positive and negative aspects',
     },
   ];
 
@@ -242,14 +241,14 @@ export default component$(() => {
                 in missing data, or restructure existing and expand datasets.
               </li>
             </ul>
-            <h2 class="font-semibold text-lg">See some use cases:</h2>
+            <h2 class="font-semibold text-lg">Use cases:</h2>
             <ul class="space-y-1">
               <li>Build a curated dataset</li>
               <li>Explore and brainstorm topics</li>
               <li>
                 Select the Open Source model that works better for your case
               </li>
-              <li>Leverage the quality of your prompt</li>
+              <li>Improve the quality of prompt over your own data</li>
             </ul>
             <h1 class="font-semibold text-xl">We made it for you.</h1>
             <ul class="space-y-3">
@@ -302,8 +301,7 @@ export default component$(() => {
               </li>
             </ul>
             <p class="italic mt-4">
-              Soon, we'll open-source the tool. For questions or feedback, join
-              the community channel
+              For questions or feedback, join the community tab.
             </p>
             <p class="mt-4">
               <b>Tip:</b> Use the search feature to find relevant information
