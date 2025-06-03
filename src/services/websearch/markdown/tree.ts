@@ -11,6 +11,7 @@ import {
   htmlElementToMarkdownElements,
   mergeAdjacentElements,
 } from './fromHtml';
+import { stringifyMarkdownElement } from './utils/stringify';
 
 /**
  * Converts HTML elements to Markdown elements and creates a tree based on header tags
@@ -149,4 +150,50 @@ export function flattenTree(elem: MarkdownElement): MarkdownElement[] {
 
   // For leaf elements, just return the element itself
   return [elem];
+}
+
+/**
+ * Groups list items together and returns chunks of text
+ * Preserves proper ordering for ordered lists by stringifying them together
+ */
+export function groupListItemsIntoChunks(
+  elements: MarkdownElement[],
+): string[] {
+  const chunks: string[] = [];
+  let currentListItems: MarkdownElement[] = [];
+  let isUnorderedList = false;
+
+  for (const element of elements) {
+    // If it's a list item
+    if (
+      element.type === MarkdownElementType.UnorderedListItem ||
+      element.type === MarkdownElementType.OrderedListItem
+    ) {
+      const isCurrentUnordered =
+        element.type === MarkdownElementType.UnorderedListItem;
+      if (
+        currentListItems.length > 0 &&
+        isCurrentUnordered !== isUnorderedList
+      ) {
+        // Stringify the entire list at once to maintain proper ordering
+        chunks.push(currentListItems.map(stringifyMarkdownElement).join(''));
+        currentListItems = [];
+      }
+
+      isUnorderedList = isCurrentUnordered;
+      currentListItems.push(element);
+    } else {
+      if (currentListItems.length > 0) {
+        chunks.push(currentListItems.map(stringifyMarkdownElement).join(''));
+        currentListItems = [];
+      }
+      chunks.push(stringifyMarkdownElement(element));
+    }
+  }
+
+  if (currentListItems.length > 0) {
+    chunks.push(currentListItems.map(stringifyMarkdownElement).join(''));
+  }
+
+  return chunks;
 }
