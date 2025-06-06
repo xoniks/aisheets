@@ -345,6 +345,7 @@ export default component$(() => {
                     id="prompt"
                     look="ghost"
                     value={prompt.value}
+                    disabled={isLoading.value}
                     placeholder="Describe the dataset you want or try one of the examples below"
                     class={cn(
                       'p-4 max-h-40 resize-none overflow-auto text-base placeholder:text-neutral-500',
