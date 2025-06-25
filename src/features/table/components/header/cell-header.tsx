@@ -8,6 +8,11 @@ import { CellSettings } from '~/features/table/components/header/cell-settings';
 import { ColumnNameEdition } from '~/features/table/components/header/column-name-edition';
 import { DeleteColumn } from '~/features/table/components/header/delete-column';
 import { HideColumn } from '~/features/table/components/header/hide-column';
+import {
+  hasBlobContent,
+  isArrayType,
+  isObjectType,
+} from '~/features/table/utils/kind';
 import { type Column, TEMPORAL_ID } from '~/state';
 
 export const TableCellHeader = component$<{ column: Column }>(({ column }) => {
@@ -39,16 +44,13 @@ export const TableCellHeader = component$<{ column: Column }>(({ column }) => {
   return (
     <th
       id={column.id}
-      class={cn(
-        `min-w-80 w-80 max-w-80 min-h-[50px] h-[50px] px-4 py-2 text-left border ${classes.value}`,
-        {
-          'border-r-0': column.id === TEMPORAL_ID,
-        },
-      )}
+      class={cn(`min-h-[50px] h-[50px] p-2 text-left border ${classes.value}`, {
+        'border-r-0': column.id === TEMPORAL_ID,
+      })}
     >
-      <Popover.Root flip={false} gutter={8} floating="bottom-start">
+      <Popover.Root flip={false} gutter={8} floating="bottom">
         <Popover.Trigger class="flex items-center justify-between w-full h-[20px] py-[10px]">
-          <div class="flex flex-col items-start text-wrap w-[82%]">
+          <div class="flex flex-col items-start text-wrap w-full">
             <span
               class={cn(buttonVariants({ look: 'ghost' }), 'text-neutral-600')}
             >
@@ -85,24 +87,3 @@ export const TableCellHeader = component$<{ column: Column }>(({ column }) => {
     </th>
   );
 });
-
-//Refactor, duplicated
-export const hasBlobContent = (column: Column): boolean => {
-  return column.type.includes('BLOB');
-};
-
-export const isArrayType = (column: Column): boolean => {
-  return column.type.includes('[]');
-};
-
-export const isObjectType = (column: Column): boolean => {
-  return column.type.startsWith('STRUCT') || column.type.startsWith('MAP');
-};
-
-export const isTextType = (column: Column): boolean => {
-  return (
-    column.type.startsWith('TEXT') ||
-    column.type.startsWith('STRING') ||
-    column.type.startsWith('VARCHAR')
-  );
-};
