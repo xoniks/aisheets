@@ -12,7 +12,7 @@ import {
   hasBlobContent,
   isArrayType,
   isObjectType,
-} from '~/features/table/utils/kind';
+} from '~/features/utils/columns';
 import { type Column, TEMPORAL_ID } from '~/state';
 
 export const TableCellHeader = component$<{ column: Column }>(({ column }) => {

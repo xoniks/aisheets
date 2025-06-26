@@ -1,7 +1,7 @@
 import { component$, useSignal, useTask$ } from '@builder.io/qwik';
 import type { CellProps } from '~/features/table/components/body/renderer/cell-props';
 import { processMediaContent } from '~/features/table/utils/binary-content';
-import { isObjectType } from '~/features/table/utils/kind';
+import { isObjectType } from '~/features/utils/columns';
 
 interface MediaRendererProps {
   src?: string;
