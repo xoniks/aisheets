@@ -40,6 +40,8 @@ ollama serve
 ollama run llama3
 ```
 
+(Visit the Ollama [FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md#how-can-i-specify-the-context-window-size) page to know more about Ollama server configuration)
+
 2. Set the environment variables:
 
 ```sh
