@@ -34,7 +34,7 @@ To run Sheets with Ollama, you can follow these steps:
 ```sh
 export OLLAMA_NOHISTORY=1
 ollama serve
-``
+```
 
 ```sh
 ollama run llama3
