@@ -97,17 +97,14 @@ Inside your project, you'll see the following directory structure:
 Run this on your root folder
 
 ```sh
-touch .env.local
+touch .env
 ```
 
-Add in your `.env.local` file the following variables:
+Add in your `.env` file the following variable:
 
 ```
-OAUTH_CLIENT_ID
-HF_TOKEN=X
+HF_TOKEN=your_hugging_face_token
 ```
-
-Please note that if you define the `HF_TOKEN`, this variable will take priority over `OAUTH_CLIENT_ID`.
 
 Development mode uses [Vite's development server](https://vitejs.dev/). The `dev` command will server-side render (SSR) the output during development.
 
