@@ -68,7 +68,7 @@ export const CellRenderer = component$<CellProps>((props) => {
   useVisibleTask$(({ track }) => {
     track(isExpanded);
 
-    if (isExpanded.value && !cell.id) {
+    if (isExpanded.value && !(cell.id || cell.value)) {
       isEditing.value = true;
     }
   });
@@ -81,9 +81,7 @@ export const CellRenderer = component$<CellProps>((props) => {
     <div
       class="w-full h-full"
       onDblClick$={() => {
-        if (!cell.id) {
-          if (!isTextType(column)) return;
-        }
+        if (!(cell.id || cell.value) && !isTextType(column)) return;
 
         if (isExpanded.value) return;
 
