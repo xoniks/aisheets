@@ -5,19 +5,13 @@ import type { CellProps } from '~/features/table/components/body/renderer/cell-p
 import { CellRawEditor } from '~/features/table/components/body/renderer/cell-raw-editor';
 import { TableRenderer } from '~/features/table/components/body/renderer/components/cell/table-renderer';
 import { PreviewRenderer } from '~/features/table/components/body/renderer/components/preview/preview-renderer';
-import {
-  stopScrolling,
-  unSelectText,
-} from '~/features/table/components/body/renderer/components/utils';
+import { unSelectText } from '~/features/table/components/body/renderer/components/utils';
 import { hasBlobContent, isTextType } from '~/features/utils/columns';
-import { useColumnsStore } from '~/state';
 import { useValidateCellUseCase } from '~/usecases/validate-cell.usecase';
 
 export const CellRenderer = component$<CellProps>((props) => {
   const { cell } = props;
-  const { columns } = useColumnsStore();
   const validateCell = useValidateCellUseCase();
-  const column = columns.value.find((col) => col.id === cell.column?.id);
 
   const isExpanded = useSignal(false);
   const isEditing = useSignal(false);
@@ -31,19 +25,6 @@ export const CellRenderer = component$<CellProps>((props) => {
 
     originalValue.value = cell.value;
     newValue.value = cell.value;
-  });
-
-  useVisibleTask$(({ track, cleanup }) => {
-    track(isExpanded);
-
-    stopScrolling(isExpanded, cleanup);
-    unSelectText();
-  });
-
-  useVisibleTask$(({ track }) => {
-    track(isEditing);
-
-    newValue.value = originalValue.value;
   });
 
   const onEdit = $(() => {
@@ -65,27 +46,20 @@ export const CellRenderer = component$<CellProps>((props) => {
     onClose();
   });
 
-  useVisibleTask$(({ track }) => {
-    track(isExpanded);
-
-    if (isExpanded.value && !(cell.id || cell.value)) {
-      isEditing.value = true;
-    }
-  });
-
-  if (!column) {
-    return null;
-  }
-
   return (
     <div
       class="w-full h-full"
       onDblClick$={() => {
-        if (!(cell.id || cell.value) && !isTextType(column)) return;
+        if (isExpanded.value || isEditing.value) return;
+        if (!(cell.id || cell.value) && !isTextType(cell.column)) return;
 
-        if (isExpanded.value) return;
+        unSelectText();
 
         isExpanded.value = true;
+
+        if (!cell.id && !cell.value) {
+          isEditing.value = true;
+        }
       }}
     >
       <div class="h-full flex flex-col justify-between cursor-pointer">
@@ -97,7 +71,7 @@ export const CellRenderer = component$<CellProps>((props) => {
       {isExpanded.value && (
         <>
           <div
-            class="fixed inset-0 bg-neutral-700/40 z-50"
+            class="fixed inset-0 bg-neutral-700/40 z-[100] overlay"
             onClick$={() => {
               if (isEditing.value) return;
 
@@ -116,7 +90,7 @@ export const CellRenderer = component$<CellProps>((props) => {
             <div class="flex items-center justify-center w-full h-full p-6 bg-neutral-50">
               {!isEditing.value ? (
                 <div class="w-full h-full flex flex-col gap-3">
-                  {!hasBlobContent(column) ? (
+                  {!hasBlobContent(cell.column) ? (
                     <div class="w-full h-9 flex justify-end">
                       <Button
                         look="ghost"

@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { ColumnCellModel } from '~/services/db/models/cell';
-import type { Cell } from '~/state';
+import type { Cell, Column } from '~/state';
 
 import {
   type CellSource,
@@ -11,19 +11,23 @@ import { getColumnById, listColumnsByIds } from './columns';
 import { listDatasetTableRows, upsertColumnValues } from './tables';
 import { deleteDatasetTableRows } from './tables/delete-table-rows';
 
-const rowDataToCells = ({
-  rowIdx,
-  rowData,
-}: {
-  rowIdx: number;
-  rowData: Record<string, any>;
-}): Cell[] => {
+const rowDataToCells = (
+  {
+    rowIdx,
+    rowData,
+  }: {
+    rowIdx: number;
+    rowData: Record<string, any>;
+  },
+  column?: Column | ColumnModel,
+): Cell[] => {
   return Object.entries(rowData).map(([columnId, cellValue]) => {
     return {
       idx: rowIdx,
       value: cellValue,
       column: {
         id: columnId,
+        type: column?.type ?? '',
       },
       // default values
       id: undefined, // review this and probably let the id be undefined
@@ -76,7 +80,10 @@ export const getColumnCellById = async (id: string): Promise<Cell | null> => {
     offset: model.idx,
   });
 
-  const cell = rowDataToCells({ rowIdx: model.idx, rowData: rows[0] })[0];
+  const cell = rowDataToCells(
+    { rowIdx: model.idx, rowData: rows[0] },
+    column,
+  )[0];
 
   return mergeCellWithModel({ cell, model });
 };
@@ -150,7 +157,7 @@ export const getColumnCellByIdx = async ({
 
   if (rows.length === 0) return null;
 
-  const cell = rowDataToCells({ rowIdx: idx, rowData: rows[0] })[0];
+  const cell = rowDataToCells({ rowIdx: idx, rowData: rows[0] }, column)[0];
 
   const model = await ColumnCellModel.findOne({
     where: {
@@ -204,6 +211,7 @@ export const getValidatedColumnCells = async ({
     validated: model.validated,
     column: {
       id: model.columnId,
+      type: model.column?.type!,
     },
     updatedAt: model.updatedAt,
     generating: model.generating,
@@ -236,7 +244,7 @@ export const getColumnCells = async ({
   if (rows.length === 0) return [];
 
   const cells = rows.map((rowData, idx) =>
-    rowDataToCells({ rowIdx: (offset || 0) + idx, rowData }),
+    rowDataToCells({ rowIdx: (offset || 0) + idx, rowData }, dbColumn),
   );
 
   const storedCells = await ColumnCellModel.findAll({
@@ -351,6 +359,7 @@ export const createCell = async ({
     validated: model.validated,
     column: {
       id: model.columnId,
+      type: model.column?.type!,
     },
     updatedAt: model.updatedAt,
     generating: model.generating,
@@ -392,6 +401,7 @@ export const updateCell = async (cell: Partial<Cell>): Promise<Cell> => {
     validated: model.validated,
     column: {
       id: model.columnId,
+      type: model.column?.type!,
     },
     updatedAt: model.updatedAt,
     generating: model.generating,

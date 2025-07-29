@@ -21,9 +21,10 @@ import { Tooltip } from '~/components/ui/tooltip/tooltip';
 import { VirtualScrollContainer } from '~/components/ui/virtual-scroll/virtual-scroll';
 import { useExecution } from '~/features/add-column';
 import { useGenerateColumn } from '~/features/execution';
+import { isOverlayOpen } from '~/features/table/components/body/renderer/components/utils';
 import { TableCell } from '~/features/table/table-cell';
 import { configContext } from '~/routes/home/layout';
-import { deleteRowsCells, getColumnCells } from '~/services';
+import { deleteRowsCells } from '~/services';
 import {
   type Cell,
   type Column,
@@ -33,25 +34,19 @@ import {
 } from '~/state';
 
 export const TableBody = component$(() => {
-  const pageSize = 25;
   const rowSize = 108; // px
 
   const { modelEndpointEnabled } = useContext(configContext);
   const { activeDataset } = useDatasetsStore();
 
-  const {
-    columns,
-    firstColumn,
-    replaceColumns,
-    updateColumn,
-    deleteCellByIdx,
-  } = useColumnsStore();
+  const { columns, firstColumn, updateColumn, deleteCellByIdx } =
+    useColumnsStore();
   const { onGenerateColumn } = useGenerateColumn();
   const selectedRows = useSignal<number[]>([]);
 
-  const datasetSize = useComputed$(() => {
-    return Math.max(activeDataset.value?.size || 0, 100);
-  });
+  const datasetSize = useComputed$(() =>
+    Math.max(activeDataset.value?.size || 0, 100),
+  );
 
   const data = useComputed$(() => {
     const getCell = (column: Column, rowIndex: number): Cell => {
@@ -66,6 +61,7 @@ export const TableBody = component$(() => {
           validated: false,
           column: {
             id: column.id,
+            type: column.type,
           },
           updatedAt: new Date(),
           generating: false,
@@ -132,7 +128,9 @@ export const TableBody = component$(() => {
     }
   });
 
-  const handleMouseDown$ = $((cell: Cell, e: MouseEvent) => {
+  const handleMouseDown$ = $(async (cell: Cell, e: MouseEvent) => {
+    if (await isOverlayOpen()) return;
+
     dragStartCell.value = cell;
     selectedCellToDrag.value = [cell];
 
@@ -227,6 +225,7 @@ export const TableBody = component$(() => {
 
   const handleMouseMove$ = $(async (e: MouseEvent) => {
     if (e.buttons !== 1 /* Primary button not pressed */) return;
+    if (await isOverlayOpen()) return;
 
     if (!dragStartCell.value) return;
 
@@ -246,63 +245,6 @@ export const TableBody = component$(() => {
 
     lastMove.value = currentY;
   });
-
-  const getCells = server$(
-    async ({
-      columnIds,
-      offset,
-      limit,
-    }: {
-      columnIds: string[];
-      offset: number;
-      limit: number;
-    }) => {
-      const allCells = await Promise.all(
-        columnIds.map((columnId) =>
-          getColumnCells({
-            column: {
-              id: columnId,
-            },
-            offset,
-            limit,
-          }),
-        ),
-      );
-
-      return allCells;
-    },
-  );
-
-  const loadPage = $(
-    async ({
-      rangeStart,
-    }: {
-      rangeStart: number;
-    }) => {
-      const cells = await getCells({
-        columnIds: columns.value
-          .filter((column) => column.id !== TEMPORAL_ID)
-          .map((column) => column.id),
-        offset: rangeStart,
-        limit: pageSize,
-      });
-
-      for (const cell of cells.flat()) {
-        const column = columns.value.find((c) => c.id === cell.column?.id);
-        if (!column) return;
-
-        if (column.cells.some((c) => c.idx === cell.idx)) {
-          column.cells = [
-            ...column.cells.map((c) => (c.idx === cell.idx ? cell : c)),
-          ];
-        } else {
-          column.cells.push(cell);
-        }
-      }
-
-      replaceColumns(columns.value);
-    },
-  );
 
   const itemRenderer = $(
     (
@@ -490,12 +432,8 @@ export const TableBody = component$(() => {
       <VirtualScrollContainer
         key={datasetSize.value}
         totalCount={datasetSize.value}
-        buffer={pageSize}
         estimateSize={rowSize}
-        overscan={pageSize * 2}
-        pageSize={pageSize}
         data={data}
-        loadNextPage={loadPage}
         itemRenderer={itemRenderer}
         scrollElement={scrollElement}
       />

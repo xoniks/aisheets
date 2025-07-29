@@ -17,6 +17,7 @@ import {
   observeElementOffset,
   observeElementRect,
 } from '@tanstack/virtual-core';
+import { nextTick } from '~/components/hooks/tick';
 import { makeSerializable } from './make-serializable';
 
 const { getSerializable: getVirtual, useSerializable: useVirtualScroll } =
@@ -28,7 +29,7 @@ const { getSerializable: getVirtual, useSerializable: useVirtualScroll } =
         range?: { startIndex: number; endIndex: number };
         totalCount: number;
         estimateSize: number;
-        overscan: number;
+        overscan?: number;
         debug?: boolean;
       }) => {
         const virtualizer = new Virtualizer({
@@ -79,7 +80,7 @@ export const VirtualScrollContainer = component$(
   }: {
     totalCount: number;
     data: Signal<unknown[]>;
-    loadNextPage: QRL<
+    loadNextPage?: QRL<
       ({
         rangeStart,
       }: {
@@ -94,9 +95,9 @@ export const VirtualScrollContainer = component$(
       ) => any
     >;
     estimateSize: number;
-    overscan: number;
-    pageSize: number;
-    buffer: number;
+    overscan?: number;
+    pageSize?: number;
+    buffer?: number;
     scrollElement: Signal<HTMLElement | undefined>;
     debug?: boolean;
   }) => {
@@ -104,6 +105,7 @@ export const VirtualScrollContainer = component$(
       throw new Error('scrollElement is required');
     }
 
+    const measuredIndices = useSignal(new Set<number>());
     const loadingData = useSignal(false);
     const virtualState = useVirtualScroll({
       debug,
@@ -115,9 +117,11 @@ export const VirtualScrollContainer = component$(
     });
 
     useTask$(({ track }) => {
+      if (!loadNextPage) return;
       track(() => virtualState.state.range);
 
       const indexToFetch = (virtualState.state.range?.endIndex ?? 0) + buffer;
+
       if (
         isBrowser &&
         indexToFetch < totalCount &&
@@ -154,7 +158,15 @@ export const VirtualScrollContainer = component$(
         {visibleRows.value.map((item: VirtualItem) => {
           return itemRenderer(item, data.value[item.index], {
             key: item.key.toString(),
-            ref: (node) => virtualState.value?.measureElement(node),
+            ref: (node) => {
+              if (node?.isConnected && !measuredIndices.value.has(item.index)) {
+                measuredIndices.value.add(item.index);
+                node.setAttribute('data-index', item.index.toString());
+                nextTick(() => {
+                  virtualState.value?.measureElement?.(node);
+                });
+              }
+            },
             style: {
               display: 'flex',
               position: 'absolute',
