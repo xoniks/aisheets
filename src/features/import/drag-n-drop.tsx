@@ -95,7 +95,6 @@ export const DragAndDrop = component$(() => {
     'resize',
     $(() => {
       isMobile.value = window.innerWidth <= 768;
-      console.log('isMobile', isMobile.value);
     }),
   );
 
@@ -135,7 +134,7 @@ export const DragAndDrop = component$(() => {
           preventdefault:dragover
           preventdefault:drop
           class={cn(
-            'relative h-full min-h-[180px] w-full flex justify-center items-center',
+            'relative h-full min-h-44 w-full flex justify-center items-center',
           )}
           onDragOver$={() => {
             isDragging.value = true;
@@ -171,7 +170,7 @@ export const DragAndDrop = component$(() => {
 
           <div class="flex flex-col items-center justify-center gap-6 h-full">
             <h2 class="text-primary-600 font-semibold text-xl">
-              Expand, analyze, enrich your data
+              Analyze, enrich, expand your data
             </h2>
 
             <Popover.Root
