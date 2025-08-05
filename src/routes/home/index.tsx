@@ -323,21 +323,17 @@ export default component$(() => {
               <div class="flex flex-col items-center justify-center mb-4">
                 <MainLogo class="mt-6 md:mt-0 w-[70px] h-[70px]" />
                 <h1 class="text-neutral-600 text-2xl font-semibold">
-                  AI-powered spreadsheets
+                  AI Sheets
                 </h1>
               </div>
 
               <DragAndDrop />
 
-              <div class="w-full md:w-[697px] flex justify-center items-center">
+              <div class="w-full md:w-[697px] flex justify-center items-center py-6">
                 <hr class="w-full border-t" />
                 <span class="mx-10 text-neutral-500">OR</span>
                 <hr class="w-full border-t" />
               </div>
-
-              <h2 class="text-primary-600 font-semibold text-xl text-center">
-                Build a synthetic dataset from a simple idea
-              </h2>
             </div>
           )}
 
@@ -360,7 +356,7 @@ export default component$(() => {
                     look="ghost"
                     value={prompt.value}
                     disabled={isLoading.value}
-                    placeholder="Description and representation of polite gesture by culture"
+                    placeholder="Write your dataset description here"
                     class={cn(
                       'p-4 max-h-40 resize-none overflow-auto text-base placeholder:text-neutral-500',
                       {
@@ -410,7 +406,7 @@ export default component$(() => {
                       look="primary"
                       type="submit"
                       class="w-[30px] h-[30px] rounded-full flex items-center justify-center p-0"
-                      disabled={isLoading.value || !prompt.value.trim()}
+                      disabled={isLoading.value}
                     >
                       <LuEgg class="text-lg" />
                     </Button>
