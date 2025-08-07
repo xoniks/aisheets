@@ -23,8 +23,7 @@ export const CellRenderer = component$<CellProps>((props) => {
   useVisibleTask$(({ track }) => {
     track(() => cell.value);
 
-    originalValue.value = cell.value;
-    newValue.value = cell.value;
+    newValue.value = originalValue.value = cell.value;
   });
 
   const onEdit = $(() => {
@@ -44,6 +43,16 @@ export const CellRenderer = component$<CellProps>((props) => {
     }
 
     onClose();
+  });
+
+  useVisibleTask$(({ track }) => {
+    track(isExpanded);
+
+    if (isExpanded.value) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
   });
 
   return (
@@ -89,7 +98,7 @@ export const CellRenderer = component$<CellProps>((props) => {
           >
             <div class="flex items-center justify-center w-full h-full p-6 bg-neutral-50">
               {!isEditing.value ? (
-                <div class="w-full h-full flex flex-col gap-3">
+                <div class="w-full h-full flex flex-col">
                   {!hasBlobContent(cell.column) ? (
                     <div class="w-full h-9 flex justify-end">
                       <Button
@@ -103,10 +112,10 @@ export const CellRenderer = component$<CellProps>((props) => {
                     </div>
                   ) : null}
 
-                  <PreviewRenderer {...props} value={cell.value} />
+                  <PreviewRenderer {...props} value={newValue.value} />
                 </div>
               ) : (
-                <div class="w-full h-full flex flex-col gap-3">
+                <div class="w-full h-full flex flex-col justify-between gap-3">
                   <div class="w-full h-9 flex">
                     <ToggleGroup.Root
                       bind:value={mode}
@@ -128,11 +137,13 @@ export const CellRenderer = component$<CellProps>((props) => {
                       </ToggleGroup.Item>
                     </ToggleGroup.Root>
                   </div>
-                  {mode.value === 'write' ? (
-                    <CellRawEditor {...props} value={newValue} />
-                  ) : (
-                    <PreviewRenderer {...props} value={newValue.value} />
-                  )}
+                  <div class="max-h-[40vh] md:max-h-[440px] h-full">
+                    {mode.value === 'write' ? (
+                      <CellRawEditor {...props} value={newValue} />
+                    ) : (
+                      <PreviewRenderer {...props} value={newValue.value} />
+                    )}
+                  </div>
                   <div class="flex items-center justify-end gap-2">
                     <Button
                       look="secondary"
