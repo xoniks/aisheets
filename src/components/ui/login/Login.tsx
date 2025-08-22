@@ -12,10 +12,10 @@ export const Login = component$(() => {
         look: 'primary',
       })}
       onClick$={() => {
-        nav('/auth');
+        nav('/connections');
       }}
     >
-      Log In
+      Connections
     </Button>
   );
 });

@@ -153,3 +153,27 @@ export const GoogleDrive = component$<LogoProps>(({ ...props }) => {
     </svg>
   );
 });
+
+export const DatabricksLogo = component$<LogoProps>(({ ...props }) => {
+  return (
+    <svg
+      {...props}
+      class={cn('w-4 h-4', props.class)}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <title>Databricks Logo</title>
+      <path
+        d="M8 0L13.66 3.9L8 7.8L2.34 3.9L8 0ZM8 16L13.66 12.1L8 8.2L2.34 12.1L8 16Z"
+        fill="#FF3621"
+      />
+      <path
+        d="M0 8L5.66 4.1L0 0.2V8ZM16 8L10.34 4.1L16 0.2V8Z"
+        fill="#FF3621"
+      />
+    </svg>
+  );
+});

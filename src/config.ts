@@ -291,5 +291,12 @@ export const appConfig = {
     blockedUrls: BLOCKED_URLS,
   },
 
+  databricks: {
+    encryptionKey: process.env.DATABRICKS_ENCRYPTION_KEY || 'default-key-for-development-only!!!',
+    connectionTimeout: Number(process.env.DATABRICKS_CONNECTION_TIMEOUT) || 30000,
+    queryTimeout: Number(process.env.DATABRICKS_QUERY_TIMEOUT) || 300000,
+    maxRowsPreview: Number(process.env.DATABRICKS_MAX_ROWS_PREVIEW) || 10000,
+  },
+
   enableTelemetry: TELEMETRY_ENABLED,
 };

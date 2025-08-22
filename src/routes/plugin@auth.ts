@@ -8,14 +8,24 @@ export const onRequest = async (event: RequestEvent) => {
   const anonymous = cookie.get('anonymous');
 
   if (session) {
-    sharedMap.set('session', session.json());
-
+    try {
+      sharedMap.set('session', session.json());
+    } catch (error) {
+      console.warn('Failed to parse session cookie as JSON, regenerating session:', error);
+      cookie.delete('session');
+      await saveAnonymousSession(event);
+    }
     return;
   }
 
   if (anonymous) {
-    sharedMap.set('anonymous', anonymous.json());
-
+    try {
+      sharedMap.set('anonymous', anonymous.json());
+    } catch (error) {
+      console.warn('Failed to parse anonymous cookie as JSON, regenerating session:', error);
+      cookie.delete('anonymous');
+      await saveAnonymousSession(event);
+    }
     return;
   }
 

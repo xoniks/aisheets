@@ -292,7 +292,6 @@ export const TableBody = component$(() => {
               item.index,
             ),
           })}
-          data-index={item.index}
           {...props}
         >
           <td

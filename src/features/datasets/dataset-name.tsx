@@ -10,7 +10,7 @@ import { LuLink } from '@qwikest/icons/lucide';
 import { Input } from '~/components';
 import { useClickOutside } from '~/components/hooks/click/outside';
 import { Tooltip } from '~/components/ui/tooltip/tooltip';
-import { updateDataset } from '~/services/repository/datasets';
+// updateDataset import moved inside server$ block to avoid client-side bundling
 import { useDatasetsStore } from '~/state';
 
 export const DatasetName = component$(() => {
@@ -49,6 +49,7 @@ export const DatasetName = component$(() => {
         return 'Dataset name cannot exceed 100 characters.';
       }
 
+      const { updateDataset } = await import('~/services/repository/datasets');
       await updateDataset({ id: datasetId, name: newName });
     })(activeDataset.value.id, newName);
 

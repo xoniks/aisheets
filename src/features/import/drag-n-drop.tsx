@@ -8,15 +8,31 @@ import {
   useOnWindow,
   useSignal,
   useStylesScoped$,
+  useTask$,
 } from '@builder.io/qwik';
-import { Link, useNavigate } from '@builder.io/qwik-city';
+import { Link, useNavigate, server$ } from '@builder.io/qwik-city';
 import { usePopover } from '@qwik-ui/headless';
 import { cn } from '@qwik-ui/utils';
 import { LuFilePlus2, LuUpload } from '@qwikest/icons/lucide';
 import { Button, Popover, buttonVariants } from '~/components';
 import { useClickOutside } from '~/components/hooks/click/outside';
-import { GoogleDrive, HFLogo } from '~/components/ui/logo/logo';
+import { GoogleDrive, HFLogo, DatabricksLogo } from '~/components/ui/logo/logo';
 import { configContext } from '~/routes/home/layout';
+import { useSession } from '~/loaders';
+
+const getDatabricksConnectionCount = server$(async function() {
+  const session = this.sharedMap.get('session') || this.sharedMap.get('anonymous');
+  if (!session?.user?.username) return 0;
+  
+  try {
+    const { listUserConnections } = await import('~/services/repository/databricks/connections');
+    const connections = await listUserConnections(session.user.username);
+    return connections.length;
+  } catch (error) {
+    console.error('Error fetching Databricks connections:', error);
+    return 0;
+  }
+});
 
 export const DragAndDrop = component$(() => {
   const popoverId = 'uploadFilePopover';
@@ -25,6 +41,8 @@ export const DragAndDrop = component$(() => {
   const isPopOverOpen = useSignal(false);
 
   const { isGoogleAuthEnabled } = useContext(configContext);
+  const session = useSession();
+  const databricksConnectionCount = useSignal(0);
 
   const file = useSignal<NoSerialize<File>>();
   const isDragging = useSignal(false);
@@ -90,6 +108,14 @@ export const DragAndDrop = component$(() => {
   );
 
   const isMobile = useSignal(false);
+
+  // Check for Databricks connections
+  useTask$(async ({ track }) => {
+    track(session);
+    if (!session.value.anonymous) {
+      databricksConnectionCount.value = await getDatabricksConnectionCount();
+    }
+  });
 
   useOnWindow(
     'resize',
@@ -207,6 +233,21 @@ export const DragAndDrop = component$(() => {
                   <HFLogo class="items-left w-4 h-4 flex-shrink-0" />
                   Add from Hugging Face Hub
                 </Link>
+
+                {databricksConnectionCount.value > 0 && (
+                  <>
+                    <hr class="border-t border-slate-200 dark:border-slate-700" />
+                    <Link
+                      href="/home/dataset/create/from-databricks"
+                      class={cn(
+                        'w-full flex items-center justify-start hover:bg-neutral-100 gap-2.5 p-2 rounded-none',
+                      )}
+                    >
+                      <DatabricksLogo class="items-left w-4 h-4 flex-shrink-0" />
+                      Add from Databricks
+                    </Link>
+                  </>
+                )}
 
                 {isGoogleAuthEnabled && (
                   <>

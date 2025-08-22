@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import { cn } from '@qwik-ui/utils';
-import { LuDownload, LuUpload } from '@qwikest/icons/lucide';
+import { LuDownload, LuUpload, LuDatabase } from '@qwikest/icons/lucide';
 import { Button, Label, Popover, buttonVariants } from '~/components';
 import { GoogleDrive, HFLogo } from '~/components/ui/logo/logo';
 
@@ -17,7 +17,7 @@ export const ImportDataset = component$(() => {
           <LuDownload class="w-4 h-4" />
         </Label>
       </Popover.Trigger>
-      <Popover.Panel class="w-86 max-h-40 shadow-lg p-0">
+      <Popover.Panel class="w-86 max-h-48 shadow-lg p-0">
         <div class="flex items-center justify-start gap-4">
           <HFLogo class="w-4 h-4 flex-shrink-0" />
           Add from Hugging Face Hub
@@ -28,6 +28,18 @@ export const ImportDataset = component$(() => {
           <GoogleDrive class="w-4 h-4 flex-shrink-0" />
           Add from Google Drive
         </div>
+        
+        <Button
+          class="flex items-center justify-start gap-4"
+          look="ghost"
+          onClick$={() => window.location.href = '/home/databricks/import'}
+        >
+          <LuDatabase class="w-4 h-4" />
+          Import from Databricks
+        </Button>
+        
+        <hr class="border-t border-slate-200 dark:border-slate-700" />
+        
         <Button
           class="flex items-center justify-start gap-4"
           look="ghost"

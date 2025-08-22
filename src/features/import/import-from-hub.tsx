@@ -18,8 +18,7 @@ import { useClickOutside } from '~/components/hooks/click/outside';
 import { useDebounce } from '~/components/hooks/debounce/debounce';
 import { nextTick } from '~/components/hooks/tick';
 import { useSession } from '~/loaders';
-import { listDatasets } from '~/services/repository/hub/list-datasets';
-import { listHubDatasetDataFiles } from '~/services/repository/hub/list-hub-dataset-files';
+// Repository imports moved inside server$ blocks to avoid client-side bundling
 import { useImportFromHub } from '~/usecases/import-from-hub.usecase';
 
 export const ImportFromHub = component$(() => {
@@ -166,6 +165,7 @@ const DatasetSearch = component$(
     const onSearch = $(async (searchQuery: string) => {
       const query = searchQuery.trim();
 
+      const { listDatasets } = await import('~/services/repository/hub/list-datasets');
       const datasets = await listDatasets({
         query,
         accessToken: session.value.token,
@@ -278,6 +278,7 @@ const FileSelection = component$(
     const listDatasetFiles = useResource$(async ({ track }) => {
       const newRepo = track(() => props.repoId);
 
+      const { listHubDatasetDataFiles } = await import('~/services/repository/hub/list-hub-dataset-files');
       const files = await listHubDatasetDataFiles({
         repoId: newRepo,
         accessToken: props.accessToken,

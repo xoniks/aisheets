@@ -68,6 +68,7 @@
     "vitest": "^3.0.7"
   },
   "dependencies": {
+    "@databricks/sql": "^1.5.3",
     "@duckdb/node-api": "1.2.2-alpha.19",
     "@huggingface/hub": "~2.1.0",
     "@huggingface/inference": "~4.4.0",
