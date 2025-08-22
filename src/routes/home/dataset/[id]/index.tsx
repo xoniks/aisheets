@@ -17,6 +17,9 @@ import { useSession } from '~/loaders';
 import { ActiveDatasetProvider } from '~/state';
 import { datasetAsJson } from './json/utils';
 
+// Re-export the session loader for this route (required by Qwik)
+export { useSession };
+
 export const onGet: RequestHandler = async (event: RequestEvent) => {
   const { headers } = event.request;
   const acceptHeader = headers.get('Accept') || headers.get('accept');

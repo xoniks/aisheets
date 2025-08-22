@@ -21,6 +21,9 @@ import { useSession, useTrendingHubModels } from '~/loaders';
 import { ActiveDatasetProvider } from '~/state';
 import { runAutoDataset } from '~/usecases/run-autodataset';
 
+// Re-export the loaders for this route (required by Qwik)
+export { useSession, useTrendingHubModels };
+
 const runAutoDatasetAction = server$(async function* (
   instruction: string,
   searchEnabled: boolean,

@@ -6,6 +6,9 @@ import { Input } from '~/components/ui/input/input';
 import { Label } from '~/components/ui/label/label';
 import { useSession } from '~/loaders';
 
+// Re-export the session loader for this route (required by Qwik)
+export { useSession };
+
 // Define connection interface to avoid importing Sequelize models on client
 interface DatabricksConnection {
   id: string;

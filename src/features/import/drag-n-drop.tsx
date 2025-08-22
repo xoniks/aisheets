@@ -20,6 +20,9 @@ import { GoogleDrive, HFLogo, DatabricksLogo } from '~/components/ui/logo/logo';
 import { configContext } from '~/routes/home/layout';
 import { useSession } from '~/loaders';
 
+// Re-export the session loader for this component (required by Qwik)
+export { useSession };
+
 const getDatabricksConnectionCount = server$(async function() {
   const session = this.sharedMap.get('session') || this.sharedMap.get('anonymous');
   if (!session?.user?.username) return 0;
@@ -27,6 +30,7 @@ const getDatabricksConnectionCount = server$(async function() {
   try {
     const { listUserConnections } = await import('~/services/repository/databricks/connections');
     const connections = await listUserConnections(session.user.username);
+    console.log(`Found ${connections.length} Databricks connections for user ${session.user.username}`);
     return connections.length;
   } catch (error) {
     console.error('Error fetching Databricks connections:', error);
@@ -245,6 +249,22 @@ export const DragAndDrop = component$(() => {
                     >
                       <DatabricksLogo class="items-left w-4 h-4 flex-shrink-0" />
                       Add from Databricks
+                    </Link>
+                  </>
+                )}
+                
+                {/* Debug: Always show Databricks option temporarily */}
+                {databricksConnectionCount.value === 0 && !session.value.anonymous && (
+                  <>
+                    <hr class="border-t border-slate-200 dark:border-slate-700" />
+                    <Link
+                      href="/connections"
+                      class={cn(
+                        'w-full flex items-center justify-start hover:bg-neutral-100 gap-2.5 p-2 rounded-none opacity-60',
+                      )}
+                    >
+                      <DatabricksLogo class="items-left w-4 h-4 flex-shrink-0" />
+                      Connect to Databricks first
                     </Link>
                   </>
                 )}

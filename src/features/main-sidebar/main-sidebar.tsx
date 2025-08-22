@@ -9,6 +9,10 @@ import { Login } from '~/components/ui/login/Login';
 import { MainLogo } from '~/components/ui/logo/logo';
 import { useAllDatasetsLoader, useSession } from '~/loaders';
 import { useDatasetsStore } from '~/state';
+import { DatabricksLogo } from '~/components/ui/logo/logo';
+
+// Re-export the loaders for this component (required by Qwik)
+export { useSession, useAllDatasetsLoader };
 
 export const MainSidebarButton = component$(() => {
   const { isOpenMainSidebar, openMainSidebar, closeMainSidebar } =
@@ -113,6 +117,17 @@ export const MainSidebar = component$(() => {
             />
             Create a dataset
           </Link>
+          
+          {!session.value.anonymous && (
+            <Link
+              href="/connections"
+              class="flex items-center gap-3 py-2 hover:bg-gray-100 rounded text-sm font-light truncate max-w-full pl-3"
+            >
+              <DatabricksLogo class="w-6 h-6" />
+              Databricks connections
+            </Link>
+          )}
+          
           {/* <Tooltip text="Coming soon!">
             <Link class="flex items-center select-none gap-3 py-2 hover:bg-gray-100 rounded text-sm font-light truncate max-w-full pl-3">
               <LuLibrary class="w-6 h-6 text-muted-foreground" />

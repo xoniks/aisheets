@@ -5,6 +5,9 @@ import { Button } from '~/components/ui/button/button';
 import { Label } from '~/components/ui/label/label';
 import { useSession } from '~/loaders';
 
+// Re-export the session loader for this route (required by Qwik)
+export { useSession };
+
 // Define connection interface to avoid importing Sequelize models on client
 interface DatabricksConnection {
   id: string;
@@ -99,15 +102,10 @@ export default component$(() => {
   // Load connections on mount
   useTask$(async () => {
     if (session.value.anonymous) {
-      nav('/connections');
       return;
     }
     
     connections.value = await getDatabricksConnections();
-    
-    if (connections.value.length === 0) {
-      nav('/connections');
-    }
   });
 
   const handleConnectionChange = $(async (event: Event) => {
@@ -175,7 +173,7 @@ export default component$(() => {
       <div class="container mx-auto px-4 py-8 max-w-2xl">
         <div class="text-center">
           <p class="text-neutral-600 mb-4">Please connect to Hugging Face first to access Databricks.</p>
-          <Button onClick$={() => nav('/connections')} look="primary">
+          <Button onClick$={() => { nav('/connections'); }} look="primary">
             Go to Connections
           </Button>
         </div>
@@ -187,7 +185,7 @@ export default component$(() => {
     <div class="container mx-auto px-4 py-8 max-w-2xl">
       <div class="flex items-center gap-4 mb-8">
         <Button
-          onClick$={() => nav('/')}
+          onClick$={() => { nav('/'); }}
           look="ghost"
           size="sm"
         >
@@ -208,7 +206,7 @@ export default component$(() => {
           <p class="text-neutral-600 mb-4">
             You need to add a Databricks connection first.
           </p>
-          <Button onClick$={() => nav('/connections')} look="primary">
+          <Button onClick$={() => { nav('/connections'); }} look="primary">
             Manage Connections
           </Button>
         </div>
